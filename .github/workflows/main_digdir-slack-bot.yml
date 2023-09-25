@@ -22,6 +22,10 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Create and start virtual environment
+        run: |
+          pip install poetry
+      
       - name: Install dependencies
         run: poetry install
         
