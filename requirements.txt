@@ -519,9 +519,9 @@ jupyter-client==8.3.1 ; python_version >= "3.9" and python_version < "4.0" \
 jupyter-core==5.3.1 ; python_version >= "3.9" and python_version < "4.0" \
     --hash=sha256:5ba5c7938a7f97a6b0481463f7ff0dbac7c15ba48cf46fa4035ca6e838aa1aba \
     --hash=sha256:ae9036db959a71ec1cac33081eeb040a79e681f08ab68b0883e9a676c7a90dce
-langchain==0.0.225 ; python_version >= "3.9" and python_version < "4.0" \
-    --hash=sha256:986e0838faef3c344d8c00b0079814ca357a39b17f7642e06beb075d3c59c770 \
-    --hash=sha256:a72132ceb22f9a9fcad944778fd351d33b63e27a9c03f61d17e4e52fad37fe47
+langchain==0.0.236; python_version >= "3.9" and python_version < "4.0" \
+    --hash=sha256:117329768e3419f2d46bcadb5d4401d542372407a3d5ae754c3dadaec4c3fdfe \
+    --hash=sha256:b4872a9922d131b60f3ce94bc01787663e1986bdcd40fca65594605869185e30
 langchainplus-sdk==0.0.20 ; python_version >= "3.9" and python_version < "4.0" \
     --hash=sha256:07a869d476755803aa04c4986ce78d00c2fe4ff584c0eaa57d7570c9664188db \
     --hash=sha256:3d300e2e3290f68cc9d842c059f9458deba60e776c9e790309688cad1bfbb219
