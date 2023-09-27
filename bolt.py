@@ -40,8 +40,7 @@ pp = pprint.PrettyPrinter(indent=2)
 
 hitl_config = {
     'enabled': True,
-    'main_channel': 'C05TCNZHSTE', 
-    'qa_channel': 'C05T7CN189K'
+    'qa_channel': os.environ["SLACK_BOT_REVIEW_CHANNEL_ID"]
 }
 
 @app.command("/hello-socket-mode")

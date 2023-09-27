@@ -18,18 +18,16 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
 
     src_msg_metadata = utils.slack_utils.get_message_metadata(msg_body)
 
-    hitl_enabled = hitl_config.get("enabled")
+    main_channel_id = msg_body.get("event").get("channel")
+    target_channel_id = main_channel_id
+    qa_channel_id = hitl_config.get("qa_channel", '')
 
+    hitl_enabled = qa_channel_id != '' and hitl_config.get("enabled")
+
+    # override target_channel_id if hitl enabled
     if hitl_enabled:
-        # send startMsg to qa_channel first
-        main_channel_id = hitl_config.get("main_channel", '')
-        qa_channel_id = hitl_config.get("qa_channel", '')
         target_channel_id = qa_channel_id
-    else:
-        main_channel_id = msg_body.get("event").get("channel")
-        qa_channel_id = ''
-        target_channel_id = main_channel_id
-
+    
     print(
         f"hitl enabled: {hitl_enabled}, main_channel_id: {main_channel_id}, qa_channel_id: {qa_channel_id}"
     )
