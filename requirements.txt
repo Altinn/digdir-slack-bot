@@ -855,9 +855,9 @@ nvidia-cusolver-cu11==11.4.0.1 ; platform_system == "Linux" and platform_machine
     --hash=sha256:00f70b256add65f8c1eb3b6a65308795a93e7740f6df9e273eccbba770d370c4 \
     --hash=sha256:700b781bfefd57d161443aff9ace1878584b93e0b2cfef3d6e9296d96febbf99 \
     --hash=sha256:72fa7261d755ed55c0074960df5904b65e2326f7adce364cbe4945063c1be412
-nvidia-cusparse-cu11==11.7.4.91 ; platform_system == "Linux" and platform_machine == "x86_64" and python_version >= "3.9" and python_version < "4.0" \
-    --hash=sha256:304a01599534f5186a8ed1c3756879282c72c118bc77dd890dc1ff868cad25b9 \
-    --hash=sha256:a3389de714db63321aa11fbec3919271f415ef19fda58aed7f2ede488c32733d
+nvidia-cusparse-cu11==11.7.5.86; platform_system == "Linux" and platform_machine == "x86_64" and python_version >= "3.9" and python_version < "4.0" \
+    --hash=sha256:4ae709fe78d3f23f60acaba8c54b8ad556cf16ca486e0cc1aa92dca7555d2d2b \
+    --hash=sha256:a0f6ee81cd91be606fc2f55992d06b09cd4e86d74b6ae5e8dd1631cf7f5a8706
 nvidia-nccl-cu11==2.14.3 ; platform_system == "Linux" and platform_machine == "x86_64" and python_version >= "3.9" and python_version < "4.0" \
     --hash=sha256:5e5534257d1284b8e825bc3a182c6f06acd6eb405e9f89d49340e98cd8f136eb
 nvidia-nvtx-cu11==11.7.91 ; platform_system == "Linux" and platform_machine == "x86_64" and python_version >= "3.9" and python_version < "4.0" \
