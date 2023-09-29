@@ -45,7 +45,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         )
         return
 
-    print(f"Starting choose team chain...")
+    print(f"Starting {chain_name} chain...")
 
     quoted_input = text.replace("\n", "\n>")
 

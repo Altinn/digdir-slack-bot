@@ -4,6 +4,9 @@ import pprint
 from slack_sdk.errors import SlackApiError
 import utils.slack_utils
 from docs_qa.main import docs_query
+from channel_msg_categorize.run_chain import (
+    run_chain_async as run_channel_msg_categorize,
+)
 
 
 pp = pprint.PrettyPrinter(indent=2)
@@ -30,6 +33,19 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     print(
         f"hitl enabled: {hitl_enabled}, main_channel_id: {main_channel_id}, qa_channel_id: {qa_channel_id}"
     )
+
+    # categorize message, respond to messages of type '[Support Request]'
+    response = await run_channel_msg_categorize(text)
+    message_category = response["text"]
+    print(f"Message category: {message_category}")
+
+    if message_category != "[Support Request]":
+        # we only handle support requests, so done
+        print(
+            f'Assistant does not know what to do with messages of category: "{message_category}"'
+        )
+        return
+
 
     quoted_input = text.replace("\n", "\n>")
 

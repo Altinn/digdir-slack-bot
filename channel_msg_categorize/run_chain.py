@@ -15,14 +15,6 @@ dbqa = setup_dbqa()
     
 
 async def run_chain_async(user_input):
-    #     start = timeit.default_timer()
-#     response = await team_query(user_input)
-#     end = timeit.default_timer()
-#     print('-- incoming_message_category - raw llm response --')
-#     pp.pprint(response)
-#     answer = response.get('text', 'No answer found')  # Use get method to avoid KeyError
-#     return answer, round(end - start)
-
     print(f'user_input:', user_input)
     response = dbqa(user_input)
     return response
