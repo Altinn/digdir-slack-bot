@@ -1,5 +1,5 @@
 RETURN_SOURCE_DOCUMENTS: True
-VECTOR_COUNT: 2
+VECTOR_COUNT: 6
 CHUNK_SIZE: 500
 CHUNK_OVERLAP: 50
 DATA_PATH: '/Users/bdbrodie/dev/altinn/docs/content/'
