@@ -83,6 +83,10 @@ def handle_message_events(ack, say, body, logger):
                         app, hitl_config, say, body, text.replace(bot_query_word_team, "")
                     )
                 )
+            elif not text.startswith('['):
+                asyncio.run(
+                    bot_docs_qa(app, hitl_config, say, body, text)
+                )
             else:
                 print(f"Unknown query type: '{text}'")
 

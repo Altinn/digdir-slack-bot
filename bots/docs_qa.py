@@ -7,6 +7,7 @@ from docs_qa.main import docs_query
 
 
 pp = pprint.PrettyPrinter(indent=2)
+chain_name = "[docs]"
 
 async def run_bot_async(app, hitl_config, say, msg_body, text):
     src_msg_metadata = utils.slack_utils.get_message_metadata(msg_body)
@@ -59,7 +60,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
 
     if hitl_enabled:
         thread1 = app.client.chat_postMessage(
-            text=f"Running chain...", channel=qa_channel_id, thread_ts=thread_ts
+            text=f"Running {chain_name} chain...", channel=qa_channel_id, thread_ts=thread_ts
         )
     else:
         thread1 = say(

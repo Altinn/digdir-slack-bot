@@ -11,6 +11,7 @@ from channel_msg_categorize.run_chain import (
 )
 
 json_doc_keyword = "JSON Document:".lower()
+chain_name = "[choose_team]"
 
 
 async def run_bot_async(app, hitl_config, say, msg_body, text):
@@ -64,7 +65,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
 
     if hitl_enabled:
         thread1 = app.client.chat_postMessage(
-            text=f"Running chain...", channel=qa_channel_id, thread_ts=thread_ts
+            text=f"Running {chain_name} chain...", channel=qa_channel_id, thread_ts=thread_ts
         )
     else:
         thread1 = say(
