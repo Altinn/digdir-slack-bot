@@ -1618,7 +1618,7 @@ torch==2.0.0 ; python_version >= "3.9" and python_version < "4.0" \
     --hash=sha256:d439aec349c98f12819e8564b8c54008e4613dd4428582af0e6e14c24ca85870 \
     --hash=sha256:e54846aa63855298cfb1195487f032e413e7ac9cbfa978fda32354cc39551475 \
     --hash=sha256:ec5fff2447663e369682838ff0f82187b4d846057ef4d119a8dea7772a0b17dd
-torchvision==0.15.1 ; python_version >= "3.9" and python_version < "4.0" \
+torchvision==0.16.0 ; python_version >= "3.9" and python_version < "4.0" \
     --hash=sha256:13f71a3372d9168b01481a754ebaa171207f3dc455bf2fd86906c69222443738 \
     --hash=sha256:1dfdec7c7df967330bba3341a781e0c047d4e0163e67164a9918500362bf7d91 \
     --hash=sha256:21e6beb69e77ef6575c4fdd0ab332b96e8a7f144eee0d333acff469c827a4b5e \
