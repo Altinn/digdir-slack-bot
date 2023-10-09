@@ -1826,7 +1826,7 @@ toml==0.10.2 ; python_version >= "3.9" and python_version < "4.0" \
 tomli==2.0.1 ; python_version >= "3.9" and python_version < "3.11" \
     --hash=sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc \
     --hash=sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f
-torch==2.0.0 ; python_version >= "3.9" and python_version < "4.0" \
+torch==2.1.0 ; python_version >= "3.9" and python_version < "4.0" \
     --hash=sha256:01858620f25f25e7a9ec4b547ff38e5e27c92d38ec4ccba9cfbfb31d7071ed9c \
     --hash=sha256:09651bff72e439d004c991f15add0c397c66f98ab36fe60d5514b44e4da722e8 \
     --hash=sha256:11b0384fe3c18c01b8fc5992e70fc519cde65e44c51cc87be1838c1803daf42f \
