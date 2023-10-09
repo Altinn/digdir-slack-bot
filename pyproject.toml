@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "Altinn Studio Assistent"
+name = "Altinn Assistent"
 version = "0.1.0"
 description = ""
 authors = ["Open Source contributors"]
@@ -28,6 +28,7 @@ openai = "^0.28.1"
 slack-bolt = "^1.18.0"
 tiktoken = "*"
 instructor = "^0.2.8"
+datamodel-code-generator = "^0.22.1"
 
 [build-system]
 requires = ["poetry-core"]
