@@ -522,7 +522,7 @@ jupyter-core==5.3.1 ; python_version >= "3.9" and python_version < "4.0" \
 langchain==0.0.236 ; python_version >= "3.9" and python_version < "4.0" \
     --hash=sha256:117329768e3419f2d46bcadb5d4401d542372407a3d5ae754c3dadaec4c3fdfe \
     --hash=sha256:b4872a9922d131b60f3ce94bc01787663e1986bdcd40fca65594605869185e30
-langsmith==0.0.10 ; python_version >= "3.9" and python_version < "4.0" \
+langsmith==0.0.43 ; python_version >= "3.9" and python_version < "4.0" \
     --hash=sha256:11e5db0d8e29ee5583cabd872eeece8ce50738737b1f52f316ac984f4a1a58c5 \
     --hash=sha256:716412979613a5eb550c9bce33165cd1bad296eb19009040155deccef427ef07
 lit==17.0.1 ; platform_system == "Linux" and platform_machine == "x86_64" and python_version >= "3.9" and python_version < "4.0" \
