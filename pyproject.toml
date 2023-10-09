@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "Altinn Studio Assistent"
+name = "Altinn Assistent"
 version = "0.1.0"
 description = ""
 authors = ["Open Source contributors"]
@@ -13,9 +13,9 @@ start = "main:app"
 python = "^3.9"
 ctransformers = "^0.2.26"
 faiss-cpu = "^1.7.4"
-fastapi = "^0.96.0"
+fastapi = "^0.103.2"
 ipykernel = "^6.23.1"
-langchain = "^0.0.236"
+langchain = "^0.0.310"
 pypdf = "^3.9.0"
 python-box = "7.0.1"
 python-dotenv = "1.0.0"
@@ -24,9 +24,11 @@ uvicorn = "^0.22.0"
 torch = ">=2.0.0, !=2.0.1"
 unstructured = "^0.10.10"
 markdown = "^3.4.4"
-openai = "^0.27.10"
+openai = "^0.28.1"
 slack-bolt = "^1.18.0"
 tiktoken = "*"
+instructor = "^0.2.8"
+datamodel-code-generator = "^0.22.1"
 
 [build-system]
 requires = ["poetry-core"]

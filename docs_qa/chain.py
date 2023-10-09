@@ -7,7 +7,7 @@ import box
 import yaml
 import os
 
-from langchain import PromptTemplate
+from langchain.prompts import PromptTemplate 
 from langchain.chains import RetrievalQA
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
