@@ -55,6 +55,13 @@ def main(user_input):
     search_response = asyncio.run(call_typesense(extract_search_terms.searchTerms))
     pp.pprint(search_response)
 
+    # todo: 
+    #   parse search result list, extracting document IDs
+    #   retrieve embeddings from typesense for all documents
+    #   query GPT with embeddings
+
+
+
     end = timeit.default_timer()
 
     # print(f'\nAnswer: {response["result"]}')
