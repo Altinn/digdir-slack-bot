@@ -3966,6 +3966,20 @@ doc = ["cairosvg (>=2.5.2,<3.0.0)", "mdx-include (>=1.4.1,<2.0.0)", "mkdocs (>=1
 test = ["black (>=22.3.0,<23.0.0)", "coverage (>=6.2,<7.0)", "isort (>=5.0.6,<6.0.0)", "mypy (==0.910)", "pytest (>=4.4.0,<8.0.0)", "pytest-cov (>=2.10.0,<5.0.0)", "pytest-sugar (>=0.9.4,<0.10.0)", "pytest-xdist (>=1.32.0,<4.0.0)", "rich (>=10.11.0,<14.0.0)", "shellingham (>=1.3.0,<2.0.0)"]
 
 [[package]]
+name = "typesense"
+version = "0.17.0"
+description = "Python client for Typesense, an open source and typo tolerant search engine."
+optional = false
+python-versions = ">=3"
+files = [
+    {file = "typesense-0.17.0-py2.py3-none-any.whl", hash = "sha256:60be8b15d3fb602988b0da39ad013770769bf090fa30dd71df72e64a304b7661"},
+    {file = "typesense-0.17.0.tar.gz", hash = "sha256:44f1756094f6ecafebc7700ba03337530898213b182ccb9d4454b5c5233b7411"},
+]
+
+[package.dependencies]
+requests = "*"
+
+[[package]]
 name = "typing-extensions"
 version = "4.8.0"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -4225,4 +4239,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "fb16a16f004884df196334a505a372f1a5840c0b539b623ad0e33830a4d1ffcf"
+content-hash = "03b4f62b0e08a423c13afc5fef0b9d052ab9dfcf00fb0f5bd5babda9c4918880"
