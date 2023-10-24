@@ -3,7 +3,7 @@ import pprint
 
 from slack_sdk.errors import SlackApiError
 import utils.slack_utils
-from docs_qa.main import docs_query
+from docs_qa.main import rag_with_typesense
 from channel_msg_categorize.run_chain import (
     run_chain_async as run_channel_msg_categorize,
 )
@@ -84,7 +84,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         )
 
     start = timeit.default_timer()
-    response = await docs_query(text)
+    response = await rag_with_typesense(text)
     end = timeit.default_timer()
 
     answer = response["result"]
@@ -124,12 +124,14 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     # say(thread_ts=thread_ts,
     #     text=f'>{answer}')
 
-    known_path_segment = "altinn/docs/content"
+    # known_path_segment = "altinn/docs/content"
+    known_path_segment = "https://docs.altinn.studio"
+
     # Process source documents
     source_docs = response["source_documents"]
     for i, doc in enumerate(source_docs):
         print(f"doc {i}:\n{doc}")
-        source = doc.metadata["source"]
+        source = doc['metadata']["source"]
         path_segment_index = source.index(known_path_segment)
         if path_segment_index >= 0:
             slice_start = (
@@ -139,8 +141,9 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
             source = "https://docs.altinn.studio/" + source[slice_start:]
             source = source.rpartition("/")[0]
             
-        page_content = doc.page_content.replace("\n", "\n>")
-        sourceSummary = f"Source #{i+1}: {source}\n\n>{page_content}"
+        page_content = doc['page_content'].replace("\n", "\n>")
+
+        sourceSummary = f"Source #{i+1}: {source}\n\n>{page_content[:200]}"
         source_blocks = [
             {
                 "type": "section",

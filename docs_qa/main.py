@@ -87,9 +87,9 @@ async def typesense_retrieve_all_by_url(url_list):
 
 async def rag_with_typesense(user_input):
     extract_search_terms = await run_query_async(user_input)
-    # pp.pprint(extract_search_terms)
+    pp.pprint(extract_search_terms)
     search_response = await typesense_search_by_terms(extract_search_terms.searchTerms)
-    # pp.pprint(search_response)
+    pp.pprint(search_response)
 
     documents = [
         {
@@ -101,42 +101,60 @@ async def rag_with_typesense(user_input):
         for document in hit['hits']
     ]    
 
-    # print(f'Document IDs')
-    # pp.pprint(documents)
+    print(f'Document IDs')
+    pp.pprint(documents)
 
     unique_urls = list(set([document['url'] for document in documents]))
     print(f'Unique URLs')
     pp.pprint(unique_urls)
 
+    download_start = timeit.default_timer()
     # download source HTML and convert to markdown - should be done by scraper    
     with tempfile.TemporaryDirectory() as temp_dir:
         md_docs = [
             {
-                'markdown': await html_to_markdown(unique_url, "#body-inner"),
-                'url': unique_url,
-                'file_path': os.path.join(temp_dir, unique_url.replace('/', '_').replace('https:', '') + '.md')
+                'page_content': await html_to_markdown(unique_url, "#body-inner"),
+                'metadata': { 
+                    'source': unique_url,
+                    'file_path': os.path.join(temp_dir, unique_url.replace('/', '_').replace('https:', '') + '.md')
+                },                
             }
             for unique_url in unique_urls
         ]
-        # print(f'html_to_md docs:')
-        # pp.pprint(md_docs)
+        print(f'html_to_md docs:')
+        pp.pprint(md_docs)
         
         loaded_docs = []
 
         for doc in md_docs:
-            with open(doc['file_path'], 'w') as f:
-                f.write(doc['markdown'])
+            with open(doc['metadata']['file_path'], 'w') as f:
+                f.write(doc['page_content'])
                 f.flush()
-                loaded_doc = UnstructuredMarkdownLoader(doc['file_path']).load()[0]
+                loaded_doc = UnstructuredMarkdownLoader(doc['metadata']['file_path']).load()[0]
                 loaded_docs.append(loaded_doc)
                
 
         # print(f'loaded markdown docs')
         # pp.pprint(loaded_docs)
 
+    download_end = timeit.default_timer()    
+    print(f"Time to download and convert source URLs: {download_end - download_start} seconds")
+
+    print(f'Starting load_qa_chain...')
+    chain_start = timeit.default_timer()
+
     llm = build_llm()
-    chain = load_qa_chain(llm, chain_type="stuff", verbose=True)
-    response = chain.run(input_documents=loaded_docs, question=user_input)
+    chain = load_qa_chain(llm, chain_type="stuff", verbose=False)
+    result = chain.run(input_documents=loaded_docs, question=user_input)
+    chain_end = timeit.default_timer()
+
+    response = {
+        'result': result,
+        'source_documents': md_docs
+    }
+    print(f"Time to run load_qa_chain: {chain_end - chain_start} seconds")
+
+    pp.pprint(response)
 
     return response
 
@@ -162,7 +180,7 @@ def main(user_input):
     # for i, doc in enumerate(source_docs):
     #     print(f'\nSource Document {i+1}\n')
     #     print(f'Source Text: {doc.page_content}')
-    #     print(f'Document Name: {doc.metadata["source"]}')
+    #     print(f'Document Name: {doc['metadata']["source"]}')
     #     print(f'Metadata: {doc.metadata}')
     #     print('='* 60)
 

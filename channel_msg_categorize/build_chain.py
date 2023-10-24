@@ -25,7 +25,7 @@ def set_choose_team_prompt():
     return prompt
 
 def build_retrieval_choose_team(llm, prompt):
-    dbqa = LLMChain(llm=llm, prompt=prompt, verbose=True)
+    dbqa = LLMChain(llm=llm, prompt=prompt, verbose=False)
     return dbqa
 
 
