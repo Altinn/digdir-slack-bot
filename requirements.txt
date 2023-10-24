@@ -565,9 +565,9 @@ jupyter-client==8.4.0 ; python_version >= "3.9" and python_version < "4.0" \
 jupyter-core==5.4.0 ; python_version >= "3.9" and python_version < "4.0" \
     --hash=sha256:66e252f675ac04dcf2feb6ed4afb3cd7f68cf92f483607522dc251f32d471571 \
     --hash=sha256:e4b98344bb94ee2e3e6c4519a97d001656009f9cb2b7f2baf15b3c205770011d
-langchain==0.0.310 ; python_version >= "3.9" and python_version < "4.0" \
-    --hash=sha256:71e2de02742517ea981cd185c258972d82e87693191fc8745947312888364e22 \
-    --hash=sha256:d24e2d417f4a3736a73d409827ad3455168a31901ca8724d39b17a287a8185e9
+langchain==0.0.321 ; python_version >= "3.9" and python_version < "4.0" \
+    --hash=sha256:1c8e3ba63abfa0da9175fd054cb9b84caf205a144363c88f19387ae0f039ec36 \
+    --hash=sha256:ba5fcfd94d97569f904c46bfe1211f5e5633bd61a118246610c28e3b5053d653
 langdetect==1.0.9 ; python_version >= "3.9" and python_version < "4.0" \
     --hash=sha256:7cbc0746252f19e76f77c0b1690aadf01963be835ef0cd4b56dddf2a8f1dfc2a \
     --hash=sha256:cbc1fef89f8d062739774bd51eda3da3274006b3661d199c2655f6b3f6d605a0
