@@ -11,6 +11,7 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
+
 from docs_qa.prompts import qa_template
 from docs_qa.llm import build_llm
 
@@ -27,13 +28,14 @@ def set_qa_prompt():
                             input_variables=['context', 'question'])
     return prompt
 
+
 def build_retrieval_qa(llm, prompt, vectordb):
     dbqa = RetrievalQA.from_chain_type(llm=llm,
                                        chain_type='stuff',
                                        retriever=vectordb.as_retriever(search_kwargs={'k': cfg.VECTOR_COUNT}),
                                        return_source_documents=cfg.RETURN_SOURCE_DOCUMENTS,
                                        chain_type_kwargs={'prompt': prompt},      
-                                       verbose=True                                 
+                                       verbose=False                                 
                                        )
     return dbqa
 

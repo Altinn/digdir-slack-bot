@@ -66,6 +66,14 @@ poetry run python3 code_qa/update_summaries.py <path_to>/needs-summary-update.tx
 
 ___
 
+## Indexing Altinn Studio Docs
+
+docs_qa is dependent on the DocSearch web scraper for updating the Typesense free text index.
+
+1. Checkout repo
+2. Setup .env file with following properties
+3. Run scraper to update search index
+
 
 ## Tools
 - **LangChain**: Framework for developing applications powered by language models

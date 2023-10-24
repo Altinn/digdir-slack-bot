@@ -19,7 +19,7 @@ with open('docs_qa/config/config.yml', 'r', encoding='utf8') as ymlfile:
 
 
 def build_llm():
-    if cfg.MODEL_TYPE == 'gpt-4':
+    if cfg.MODEL_TYPE.startswith('gpt-'):
         api_key = os.environ['OPENAI_API_KEY_ALTINN3_DEV']
         llm = ChatOpenAI(model_name=cfg.MODEL_TYPE, 
                          temperature=cfg.TEMPERATURE, max_tokens=cfg.MAX_NEW_TOKENS,

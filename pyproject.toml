@@ -29,6 +29,9 @@ slack-bolt = "^1.18.0"
 tiktoken = "*"
 instructor = "^0.2.8"
 datamodel-code-generator = "^0.22.1"
+typesense = "^0.17.0"
+markdownify = "^0.11.6"
+beautifulsoup4 = "^4.12.2"
 
 [build-system]
 requires = ["poetry-core"]

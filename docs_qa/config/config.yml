@@ -6,7 +6,14 @@ DATA_PATH: '/Users/bdbrodie/dev/altinn/docs/content/'
 DB_FAISS_PATH: 'docs_qa/vectorstore/db_faiss'
 # MODEL_TYPE: 'mpt'
 # MODEL_BIN_PATH: 'models/mpt-7b-instruct.ggmlv3.q8_0.bin'
-MODEL_TYPE: 'gpt-4'
-MODEL_BIN_PATH: 'models/llama-2-7b-chat.ggmlv3.q8_0.bin'
+MODEL_TYPE: 'gpt-3.5-turbo-16k'
+MODEL_BIN_PATH: ''
 MAX_NEW_TOKENS: 1024
 TEMPERATURE: 0.5
+TYPESENSE_CONFIG:
+  nodes:
+  - host: 'altinn-typesense-api.azurewebsites.net'
+    port: '443'
+    protocol: 'https'
+  api_key: 'xyx'
+  connection_timeout_seconds': 2
