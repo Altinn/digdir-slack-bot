@@ -22,19 +22,20 @@ _add sequence diagram for RAG with query understanding here_
 sequenceDiagram    
     participant slack-backend
     participant docs-qa-bot
+    participant openai-gpt-3.5-turbo-api 
     participant typesense-query-api
-    participant openai-gpt-4-api 
-    participant openai-embeddings-api
+    participant docs-altinn-studio
 
     slack-backend-)docs-qa-bot: new message event
-    docs-qa-bot->>+typesense-query-api: POST /multi_query - free text input
-    typesense-query-api-->>-docs-qa-bot: ranked document set
-    docs-qa-bot->>+typesense-query-api: GET /documents w/embeddings
-    typesense-query-api-->>-docs-qa-bot: documents with embeddings
-    docs-qa-bot->>+openai-embeddings-api: create embeddings if missing
-    openai-embeddings-api-->>-docs-qa-bot: OpenAI embeddings
-    docs-qa-bot->>+openai-gpt-4-api: Chat completion with embeddings
-    openai-gpt-4-api-->>-docs-qa-bot: Chat continuation
+    docs-qa-bot->>+openai-gpt-3.5-turbo-api: extract search terms prompt
+    openai-gpt-3.5-turbo-api-->>-docs-qa-bot: return extracted search terms
+    docs-qa-bot->>+typesense-query-api: POST /multi_query - extracted search terms
+    typesense-query-api-->>-docs-qa-bot: ranked document set, grouped by url_without_anchor
+    docs-qa-bot->>+docs-altinn-studio: GET HTML for all ranked urls
+    docs-altinn-studio-->>-docs-qa-bot: HTML documents
+    docs-qa-bot->>docs-qa-bot: convert HTML to markdown
+    docs-qa-bot->>+openai-gpt-3.5-turbo-api: Chat completion with extended markdown as context
+    openai-gpt-3.5-turbo-api-->>-docs-qa-bot: Chat continuation
     docs-qa-bot-)slack-backend: Formatted chat response as new Slack message
 ```
 
