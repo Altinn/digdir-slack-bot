@@ -26,9 +26,11 @@ jobs:
         run: |
           pip install poetry
       
-      - name: Install dependencies
+      - name: Poetry install dependencies
         run: |
           poetry install
+      - name: Convert dependencies to requirements.txt format
+        run: |
           poetry export -f requirements.txt --output requirements.txt
         
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
