@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from markdownify import markdownify as md
 
-def html_to_markdown(url, start_dom_node_selector):
+async def html_to_markdown(url, start_dom_node_selector):
     response = requests.get(url)
     html_content = response.text
     

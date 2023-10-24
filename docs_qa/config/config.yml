@@ -6,7 +6,7 @@ DATA_PATH: '/Users/bdbrodie/dev/altinn/docs/content/'
 DB_FAISS_PATH: 'docs_qa/vectorstore/db_faiss'
 # MODEL_TYPE: 'mpt'
 # MODEL_BIN_PATH: 'models/mpt-7b-instruct.ggmlv3.q8_0.bin'
-MODEL_TYPE: 'gpt-3.5-turbo'
+MODEL_TYPE: 'gpt-3.5-turbo-16k'
 MODEL_BIN_PATH: ''
 MAX_NEW_TOKENS: 1024
 TEMPERATURE: 0.5

@@ -20,10 +20,7 @@ class ExtractedSearchTerms(BaseModel):
 
 pp = pprint.PrettyPrinter(indent=2)
 
-async def run_query_async(user_input):
-    
-    print(f"user_input: {user_input}")
-
+async def run_query_async(user_input):    
     query_result: ExtractedSearchTerms = openai.ChatCompletion.create(
         model=cfg.MODEL_TYPE,
         response_model=ExtractedSearchTerms,
@@ -32,8 +29,5 @@ async def run_query_async(user_input):
             {"role": "user", "content": user_input},
         ]
     )
-
-    print("Response:")
     pp.pprint(query_result)
-
     return query_result

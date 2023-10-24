@@ -84,16 +84,11 @@ async def typesense_retrieve_all_by_url(url_list):
     response = client.multi_search.perform(multi_search_args, {})
     return response
 
-def main(user_input):
 
-    start = timeit.default_timer()
-    # response = asyncio.run(docs_query(user_input))
-    # print(f'docs_query response:')
-    # pp.pprint(response)
-
-    extract_search_terms = asyncio.run(run_query_async(user_input))
-    pp.pprint(extract_search_terms)
-    search_response = asyncio.run(typesense_search_by_terms(extract_search_terms.searchTerms))
+async def rag_with_typesense(user_input):
+    extract_search_terms = await run_query_async(user_input)
+    # pp.pprint(extract_search_terms)
+    search_response = await typesense_search_by_terms(extract_search_terms.searchTerms)
     # pp.pprint(search_response)
 
     documents = [
@@ -113,21 +108,18 @@ def main(user_input):
     print(f'Unique URLs')
     pp.pprint(unique_urls)
 
-    # docs_by_url = asyncio.run(typesense_retrieve_all_by_url(unique_urls))
-    # print(f'Docs by URL')
-    # pp.pprint(docs_by_url)
-    
+    # download source HTML and convert to markdown - should be done by scraper    
     with tempfile.TemporaryDirectory() as temp_dir:
         md_docs = [
             {
-                'markdown': html_to_markdown(unique_url, "#body-inner"),
+                'markdown': await html_to_markdown(unique_url, "#body-inner"),
                 'url': unique_url,
                 'file_path': os.path.join(temp_dir, unique_url.replace('/', '_').replace('https:', '') + '.md')
             }
             for unique_url in unique_urls
         ]
-        print(f'html_to_md docs:')
-        pp.pprint(md_docs)
+        # print(f'html_to_md docs:')
+        # pp.pprint(md_docs)
         
         loaded_docs = []
 
@@ -139,23 +131,26 @@ def main(user_input):
                 loaded_docs.append(loaded_doc)
                
 
-        print(f'loaded markdown docs')
-        pp.pprint(loaded_docs)
+        # print(f'loaded markdown docs')
+        # pp.pprint(loaded_docs)
 
     llm = build_llm()
     chain = load_qa_chain(llm, chain_type="stuff", verbose=True)
     response = chain.run(input_documents=loaded_docs, question=user_input)
 
+    return response
+
+def main(user_input):
+
+    start = timeit.default_timer()
+    # response = asyncio.run(docs_query(user_input))
+    # print(f'docs_query response:')
+    # pp.pprint(response)
+
+    response = asyncio.run(rag_with_typesense(user_input))
+
     print('stuff chain response:')
     pp.pprint(response)
-
-
-
-
-    #   retrieve embeddings from typesense for all documents
-    #   query GPT with embeddings
-
-
 
     end = timeit.default_timer()
 
