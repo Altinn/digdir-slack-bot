@@ -8,8 +8,8 @@ DB_FAISS_PATH: 'docs_qa/vectorstore/db_faiss'
 # MODEL_BIN_PATH: 'models/mpt-7b-instruct.ggmlv3.q8_0.bin'
 MODEL_TYPE: 'gpt-3.5-turbo-16k'
 MODEL_BIN_PATH: ''
-MAX_NEW_TOKENS: 1024
-TEMPERATURE: 0.5
+MAX_NEW_TOKENS: 512
+TEMPERATURE: 1.0
 TYPESENSE_CONFIG:
   nodes:
   - host: 'altinn-typesense-api.azurewebsites.net'

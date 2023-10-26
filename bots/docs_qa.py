@@ -90,7 +90,8 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     answer = response["result"]
 
     blocks = [
-        {"type": "section", "text": {"type": "plain_text", "text": "Results"}},
+        {"type": "section", "text": {"type": "mrkdwn", "text": f"Search terms extracted:\n> {response['search_terms']}"}},
+        {"type": "section", "text": {"type": "mrkdwn", "text": "Results"}},
         {"type": "divider"},
         {
             "type": "section",

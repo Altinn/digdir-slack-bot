@@ -150,7 +150,8 @@ async def rag_with_typesense(user_input):
 
     response = {
         'result': result,
-        'source_documents': md_docs
+        'source_documents': md_docs,
+        'search_terms': extract_search_terms.searchTerms,
     }
     print(f"Time to run load_qa_chain: {chain_end - chain_start} seconds")
 
