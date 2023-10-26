@@ -43,7 +43,7 @@ nvidia-nvtx-cu12 = "12.1.105"
 nvidia-cusolver-cu12 = "11.4.5.107"
 nvidia-cuda-cupti-cu12 = "12.1.105"
 nvidia-nccl-cu12 = "2.18.1"
-nvidia-cudnn-cu12 = "8.9.2.26"
+nvidia-cudnn-cu12 = "8.9.5.29"
 
 [build-system]
 requires = ["poetry-core"]
