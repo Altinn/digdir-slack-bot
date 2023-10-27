@@ -144,7 +144,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
             
         page_content = doc['page_content'].replace("\n", "\n>")
 
-        sourceSummary = f"Source #{i+1}: {source}\n\n>{page_content[:200]}"
+        sourceSummary = f"Source #{i+1}: {source}"
         source_blocks = [
             {
                 "type": "section",
