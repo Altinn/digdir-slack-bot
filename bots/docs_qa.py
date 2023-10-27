@@ -2,6 +2,7 @@ import timeit
 import pprint
 
 from slack_sdk.errors import SlackApiError
+import openai.error
 import utils.slack_utils
 from docs_qa.main import rag_with_typesense
 from channel_msg_categorize.run_chain import (
@@ -83,9 +84,17 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
             text="This should only take a few seconds...", thread_ts=thread_ts
         )
 
-    start = timeit.default_timer()
-    response = await rag_with_typesense(text)
-    end = timeit.default_timer()
+    try:
+        start = timeit.default_timer()
+        response = await rag_with_typesense(text)
+        end = timeit.default_timer()
+    except openai.error.ServiceUnavailableError as e:
+        print(f'OpenAI API error: {e}')        
+        app.client.chat_postMessage(
+            thread_ts=thread_ts,
+            text=f'OpenAI API error: {e}',
+            channel=target_channel_id,
+        )
 
     answer = response["result"]
 
