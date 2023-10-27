@@ -44,9 +44,12 @@ async def typesense_search_by_terms(search_terms):
                 "query_by":"hierarchy.lvl0,hierarchy.lvl1,hierarchy.lvl2,hierarchy.lvl3,hierarchy.lvl4,hierarchy.lvl5,hierarchy.lvl6,content",
                 "include_fields":"hierarchy.lvl0,hierarchy.lvl1,hierarchy.lvl2,hierarchy.lvl3,hierarchy.lvl4,hierarchy.lvl5,hierarchy.lvl6,content,anchor,url_without_anchor,type,id",
                 "group_by":"url_without_anchor",
-                "group_limit":5,
-                "limit": 4,
-                "sort_by":"item_priority:desc",
+                "group_limit":3,
+                "limit": 10,
+                "prioritize_exact_match": False,
+                "sort_by": "_text_match:desc",
+                "drop_tokens_threshold": 5,                
+                "pre_segmented_query": True,
                 # "snippet_threshold":8,
                 "highlight_affix_num_tokens":4
             }   ]   
