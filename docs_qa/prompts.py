@@ -13,6 +13,6 @@ If you don't know the answer, just say that you don't know, don't try to make up
 Context: {context}
 Question: {question}
 
-Only return the helpful answer below and nothing else.
-Helpful answer and source code examples when relevant:
+Only return the helpful answer below, along with relevant source code examples when possible.
+Helpful answer:
 """
