@@ -169,18 +169,21 @@ def handle_action_docs_qa_approve_reply(ack, body, logger):
     user_id = body["user"]["id"]
     bot_id = body["message"]["bot_id"]
     
-    #retrieve existing chat message where ts = source_msg_ts       
-    # source_msg = slack_utils.get_message(app, body.get('container').get('channel_id'), body.get('container').get('thread_ts'))
-    # source_msg = body
-
-    # print(f'source_msg:')
-    # pp.pprint(source_msg)    
-
     blocks_without_sendbutton = copy.deepcopy(body["message"]["blocks"])
     del blocks_without_sendbutton[-1]["accessory"]
     print('blocks_without_sendbutton:')
     pp.pprint(blocks_without_sendbutton)
     
+    try:
+        app.client.reactions_add(
+            channel=body["channel"]["id"],
+            timestamp=body["message"]["ts"],
+            name="white_check_mark",
+            as_user=True
+        )
+    except SlackApiError as e:
+        logger.error(f"Error adding reaction: {e}")
+
 
     # Send a reply to the thread confirming that the message action was successful
     try:
