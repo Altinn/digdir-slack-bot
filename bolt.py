@@ -10,7 +10,6 @@ import asyncio
 import pprint
 import copy
 
-
 from slack_bolt import App
 from slack_sdk.errors import SlackApiError
 from slack_bolt.adapter.socket_mode import SocketModeHandler
@@ -19,6 +18,7 @@ import utils.slack_utils as slack_utils
 from bots.choose_team import run_bot_async as bot_choose_team
 from bots.code_qa import run_bot_async as bot_code_qa
 from bots.docs_qa import run_bot_async as bot_docs_qa
+from bots.structured_log import bot_log, BotLogEntry
 
 # Import config vars
 with open("bolt-config.yml", "r", encoding="utf8") as ymlfile:
@@ -38,10 +38,8 @@ bot_query_word_team = "[team] "
 
 pp = pprint.PrettyPrinter(indent=2)
 
-hitl_config = {
-    'enabled': True,
-    'qa_channel': os.environ["SLACK_BOT_REVIEW_CHANNEL_ID"]
-}
+hitl_config = {"enabled": True, "qa_channel": os.environ["SLACK_BOT_REVIEW_CHANNEL_ID"]}
+
 
 @app.command("/hello-socket-mode")
 def hello_command(ack, body):
@@ -58,37 +56,56 @@ def event_test(say):
 def handle_message_events(ack, say, body, logger):
     print(f"-- incoming slack message event payload --")
     pp.pprint(body)
+    src_msg_metadata = slack_utils.get_message_metadata(body)
 
     evt = body["event"]
     if evt.get("type") == "message":
         if evt.get("subtype") == "message_deleted":
             logger.info(f"Ignoring message_deleted event.")
 
-        text = evt.get("text", "")
+        clean_text = text = evt.get("text", "")
         print(f"user input: {text}")
         if not evt.get("thread_ts"):
             # message is not in a thread
 
+            bot_name = None
             if text.startswith(bot_query_word_docs):
-                asyncio.run(
-                    bot_docs_qa(app, hitl_config, say, body, text.replace(bot_query_word_docs, ""))
-                )
+                bot_name = "docs"
+                clean_text = text.replace(bot_query_word_docs, "")
             elif text.startswith(bot_query_word_code):
-                asyncio.run(
-                    bot_code_qa(app, hitl_config, say, body, text.replace(bot_query_word_code, ""))
-                )
+                bot_name = "code"
+                clean_text = text.replace(bot_query_word_code, "")
             elif text.startswith(bot_query_word_team):
-                asyncio.run(
-                    bot_choose_team(
-                        app, hitl_config, say, body, text.replace(bot_query_word_team, "")
-                    )
-                )
-            elif not text.startswith('['):
-                asyncio.run(
-                    bot_docs_qa(app, hitl_config, say, body, text)
-                )
+                bot_name = "team"
+                text.replace(bot_query_word_team, "")
+            elif not text.startswith("["):
+                bot_name = "docs"
+
+            event_time_tz = slack_utils.unixtime_to_timestamptz(body.get('event_time'))            
+                
+            entry = BotLogEntry(
+                slack_ts= src_msg_metadata['ts'],
+                thread_ts= src_msg_metadata['thread_ts'],
+                slack_user_id= src_msg_metadata['user'],
+                slack_msg_time= event_time_tz,
+                elapsed_ms= 0,
+                step_name= 'select_bot',
+                payload= {"user_input": clean_text, "bot_name": bot_name}
+            )
+            bot_log(entry)
+
+            if bot_name == "docs":
+                asyncio.run(bot_docs_qa(app, hitl_config, say, body, clean_text))
+            elif bot_name == "code":
+                asyncio.run(bot_code_qa(app, hitl_config, say, body, clean_text))
+            elif bot_name == "team":
+                asyncio.run(bot_choose_team(app, hitl_config, say, body, clean_text))
+            elif not text.startswith("["):
+                asyncio.run(bot_docs_qa(app, hitl_config, say, body, clean_text))
             else:
                 print(f"Unknown query type: '{text}'")
+
+            
 
 
 @app.action("approve_button")
@@ -146,20 +163,30 @@ def handle_team_choose_confirm(ack, body, logger):
     except SlackApiError as e:
         logger.error(f"Error sending confirmation: {e}")
 
+
 @app.action("docs|qa|approve_reply")
 def handle_action_docs_qa_approve_reply(ack, body, logger):
-    
-    action = next((action for action in body.get('actions', []) if action.get('action_id') == 'docs|qa|approve_reply'), None)
+    action = next(
+        (
+            action
+            for action in body.get("actions", [])
+            if action.get("action_id") == "docs|qa|approve_reply"
+        ),
+        None,
+    )
 
     if action is None:
         logger.error("No action with action_id 'docs|qa|approve_reply' found.")
         return
-    
 
     # Split action.value on "|" and get team, channel and message_ts
-    team, channel, message_ts = action.get("value").split("|") # team|channel|message_ts
-        
-    print(f"ack - action_id:'docs|qa|approve_reply', values - team: {team}, channel: {channel}, message_ts: {message_ts}")
+    team, channel, message_ts = action.get("value").split(
+        "|"
+    )  # team|channel|message_ts
+
+    print(
+        f"ack - action_id:'docs|qa|approve_reply', values - team: {team}, channel: {channel}, message_ts: {message_ts}"
+    )
     # Acknowledge the interaction
     ack()
 
@@ -168,29 +195,28 @@ def handle_action_docs_qa_approve_reply(ack, body, logger):
 
     user_id = body["user"]["id"]
     bot_id = body["message"]["bot_id"]
-    
+
     blocks_without_sendbutton = copy.deepcopy(body["message"]["blocks"])
     del blocks_without_sendbutton[-1]["accessory"]
-    print('blocks_without_sendbutton:')
+    print("blocks_without_sendbutton:")
     pp.pprint(blocks_without_sendbutton)
-    
+
     try:
         app.client.reactions_add(
             channel=body["channel"]["id"],
             timestamp=body["message"]["ts"],
             name="white_check_mark",
-            as_user=True
+            as_user=True,
         )
     except SlackApiError as e:
         logger.error(f"Error adding reaction: {e}")
-
 
     # Send a reply to the thread confirming that the message action was successful
     try:
         app.client.chat_postMessage(
             channel=body["channel"]["id"],
             thread_ts=body["message"]["ts"],
-            user_id=user_id,            
+            user_id=user_id,
             text=f"<@{user_id}> gave the thumbs-up, forwarding message...",
         )
         app.client.chat_postMessage(
@@ -199,7 +225,7 @@ def handle_action_docs_qa_approve_reply(ack, body, logger):
             thread_ts=message_ts,
             text=body["message"]["text"],
             blocks=blocks_without_sendbutton,
-            user_id=bot_id
+            user_id=bot_id,
         )
 
     except SlackApiError as e:

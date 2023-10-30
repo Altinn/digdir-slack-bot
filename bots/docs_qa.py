@@ -3,7 +3,8 @@ import pprint
 
 from slack_sdk.errors import SlackApiError
 import openai.error
-import utils.slack_utils
+import utils.slack_utils as slack_utils
+from bots.structured_log import bot_log, BotLogEntry
 from docs_qa.main import rag_with_typesense
 from channel_msg_categorize.run_chain import (
     run_chain_async as run_channel_msg_categorize,
@@ -13,32 +14,47 @@ from channel_msg_categorize.run_chain import (
 pp = pprint.PrettyPrinter(indent=2)
 chain_name = "[docs]"
 
-async def run_bot_async(app, hitl_config, say, msg_body, text):
-    src_msg_metadata = utils.slack_utils.get_message_metadata(msg_body)
 
-    print(f'src_msg_metadata: ')
+async def run_bot_async(app, hitl_config, say, msg_body, text):
+    src_msg_metadata = slack_utils.get_message_metadata(msg_body)
+
+    print(f"src_msg_metadata: ")
     pp.pprint(src_msg_metadata)
 
     main_channel_id = msg_body.get("event").get("channel")
     target_channel_id = main_channel_id
-    qa_channel_id = hitl_config.get("qa_channel", '')
-    src_msg_link = ''
+    qa_channel_id = hitl_config.get("qa_channel", "")
+    src_msg_link = ""
 
-    hitl_enabled = qa_channel_id != '' and hitl_config.get("enabled")
+    hitl_enabled = qa_channel_id != "" and hitl_config.get("enabled")
 
     # override target_channel_id if hitl enabled
     if hitl_enabled:
         target_channel_id = qa_channel_id
-        src_msg_link = utils.slack_utils.get_message_permalink(app, msg_body)
+        src_msg_link = slack_utils.get_message_permalink(app, msg_body)
 
     print(
         f"hitl enabled: {hitl_enabled}, main_channel_id: {main_channel_id}, qa_channel_id: {qa_channel_id}"
     )
 
     # categorize message, respond to messages of type '[Support Request]'
+    msg_categorize_start_time = timeit.default_timer()
     response = await run_channel_msg_categorize(text)
     message_category = response["text"]
     print(f"Message category: {message_category}")
+
+    event_time_tz = slack_utils.unixtime_to_timestamptz(msg_body.get("event_time", ""))
+
+
+    bot_log(BotLogEntry(
+        slack_ts= src_msg_metadata['ts'],
+        thread_ts= src_msg_metadata['thread_ts'],
+        slack_user_id= src_msg_metadata['user'],
+        slack_msg_time= event_time_tz,
+        elapsed_ms= slack_utils.time_s_to_ms(timeit.default_timer() - msg_categorize_start_time),
+        step_name= 'categorize_message',
+        payload= {"user_input": text, "bot_name": 'docs', 'message_category': message_category}
+    ))
 
     if message_category != "[Support Request]":
         # we only handle support requests, so done
@@ -46,7 +62,6 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
             f'Assistant does not know what to do with messages of category: "{message_category}"'
         )
         return
-
 
     quoted_input = text.replace("\n", "\n>")
 
@@ -57,13 +72,18 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     )
 
     blocks = (
-        [{}] if not hitl_enabled
+        [{}]
+        if not hitl_enabled
         else [
             {
                 "type": "section",
-                "text": {"type": "mrkdwn", "text": f'<{src_msg_link}|Incoming message> from <#{main_channel_id}>'},                
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"<{src_msg_link}|Incoming message> from <#{main_channel_id}>",
+                },
             },
-        ])
+        ]
+    )
 
     startMsg = app.client.chat_postMessage(
         text=thread1_text,
@@ -72,12 +92,14 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     )
 
     thread_ts = startMsg["ts"]
-    print(f'startMsg.ts: {thread_ts}')
+    print(f"startMsg.ts: {thread_ts}")
     pp.pprint(startMsg)
 
     if hitl_enabled:
         thread1 = app.client.chat_postMessage(
-            text=f"Running {chain_name} chain...", channel=qa_channel_id, thread_ts=thread_ts
+            text=f"Running {chain_name} chain...",
+            channel=qa_channel_id,
+            thread_ts=thread_ts,
         )
     else:
         thread1 = say(
@@ -88,18 +110,38 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         start = timeit.default_timer()
         response = await rag_with_typesense(text)
         end = timeit.default_timer()
+                
+        bot_log(BotLogEntry(
+            slack_ts= src_msg_metadata['ts'],
+            thread_ts= src_msg_metadata['thread_ts'],
+            slack_user_id= src_msg_metadata['user'],
+            slack_msg_time= event_time_tz,
+            elapsed_ms= slack_utils.time_s_to_ms(end - start),
+            step_name= 'rag_with_typesense',
+            payload= {"user_input": text, "bot_name": 'docs',
+                      'search_terms': response['search_terms'],
+                      'answer': response['result'],
+                      'source_urls': response['source_urls'],
+                      } 
+        ))
     except openai.error.ServiceUnavailableError as e:
-        print(f'OpenAI API error: {e}')        
+        print(f"OpenAI API error: {e}")
         app.client.chat_postMessage(
             thread_ts=thread_ts,
-            text=f'OpenAI API error: {e}',
+            text=f"OpenAI API error: {e}",
             channel=target_channel_id,
         )
 
     answer = response["result"]
 
     blocks = [
-        {"type": "section", "text": {"type": "mrkdwn", "text": f"Search terms extracted:\n> {response['search_terms']}"}},
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": f"Search terms extracted:\n> {response['search_terms']}",
+            },
+        },
         {"type": "section", "text": {"type": "mrkdwn", "text": "Results"}},
         {"type": "divider"},
         {
@@ -141,7 +183,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     source_docs = response["source_documents"]
     for i, doc in enumerate(source_docs):
         print(f"doc {i}:\n{doc}")
-        source = doc['metadata']["source"]
+        source = doc["metadata"]["source"]
         path_segment_index = source.index(known_path_segment)
         if path_segment_index >= 0:
             slice_start = (
@@ -150,8 +192,8 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
             # print(f'slice_start: {slice_start}')
             source = "https://docs.altinn.studio/" + source[slice_start:]
             source = source.rpartition("/")[0]
-            
-        page_content = doc['page_content'].replace("\n", "\n>")
+
+        page_content = doc["page_content"].replace("\n", "\n>")
 
         sourceSummary = f"Source #{i+1}: {source}"
         source_blocks = [

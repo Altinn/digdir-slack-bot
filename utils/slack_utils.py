@@ -1,16 +1,30 @@
 from slack_sdk.errors import SlackApiError
+import datetime
+import pytz
+
 
 def get_message_metadata(msg_body):
-
+    evt = msg_body.get('event')
     source_msg_meta = {
-        'ts': msg_body.get('event').get('ts'),
-        'channel': msg_body.get('event').get('channel'),
-        'team': msg_body.get('event').get('team'),
-        'user': msg_body.get('event').get('user')                
+        'ts': evt.get('ts'),
+        'thread_ts': evt.get('thread_ts'),
+        'channel': evt.get('channel'),
+        'team': evt.get('team'),
+        'user': evt.get('user')                
     }
 
     return source_msg_meta
 
+def unixtime_to_timestamptz(unixtime):
+    if unixtime:
+        event_time_utc = datetime.datetime.fromtimestamp(unixtime).astimezone(pytz.timezone('UTC'))                
+        event_time_tz = event_time_utc.strftime("%Y-%m-%d %H:%M:%S")
+        return event_time_tz
+    
+    return None
+
+def time_s_to_ms(time_diff):
+    return int(time_diff * 1000)
 
 def is_user_admin(app, user_id):
     # Check if the current user is a Slack workspace admin
