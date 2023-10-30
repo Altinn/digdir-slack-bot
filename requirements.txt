@@ -562,9 +562,9 @@ jsonschema==4.17.3 ; python_version >= "3.9" and python_version < "4.0" \
 jupyter-client==8.4.0 ; python_version >= "3.9" and python_version < "4.0" \
     --hash=sha256:6a2a950ec23a8f62f9e4c66acec7f0ea6c7d1f80ba0992e747b10c56ce2e6dbe \
     --hash=sha256:dc1b857d5d7d76ac101766c6e9b646bf18742721126e72e5d484c75a993cada2
-jupyter-core==5.4.0 ; python_version >= "3.9" and python_version < "4.0" \
-    --hash=sha256:66e252f675ac04dcf2feb6ed4afb3cd7f68cf92f483607522dc251f32d471571 \
-    --hash=sha256:e4b98344bb94ee2e3e6c4519a97d001656009f9cb2b7f2baf15b3c205770011d
+jupyter-core==5.5.0; python_version >= "3.9" and python_version < "4.0" \
+    --hash=sha256:880b86053bf298a8724994f95e99b99130659022a4f7f45f563084b6223861d3 \
+    --hash=sha256:e11e02cd8ae0a9de5c6c44abf5727df9f2581055afe00b22183f621ba3585805
 langchain==0.0.321 ; python_version >= "3.9" and python_version < "4.0" \
     --hash=sha256:1c8e3ba63abfa0da9175fd054cb9b84caf205a144363c88f19387ae0f039ec36 \
     --hash=sha256:ba5fcfd94d97569f904c46bfe1211f5e5633bd61a118246610c28e3b5053d653
