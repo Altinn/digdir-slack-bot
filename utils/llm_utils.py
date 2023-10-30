@@ -37,8 +37,7 @@ def extract_json_from_response(response: str, json_doc_keyword: str) -> JsonExtr
 
         # Load the JSON string into a Python dictionary
         json_dict = json.loads(json_str)
-        return json_dict, response_json_removed
-    
-
+        return JsonExtraction(json_dict, response_json_removed)
+        
     return None
 
