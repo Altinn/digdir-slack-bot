@@ -523,9 +523,9 @@ h11==0.14.0 ; python_version >= "3.9" and python_version < "4.0" \
 httpcore==0.12.3 ; python_version >= "3.9" and python_version < "4.0" \
     --hash=sha256:37ae835fb370049b2030c3290e12ed298bf1473c41bb72ca4aa78681eba9b7c9 \
     --hash=sha256:93e822cd16c32016b414b789aeff4e855d0ccbfc51df563ee34d4dbadbb3bcdc
-httpx==0.16.1 ; python_version >= "3.9" and python_version < "4.0" \
-    --hash=sha256:126424c279c842738805974687e0518a94c7ae8d140cd65b9c4f77ac46ffa537 \
-    --hash=sha256:9cffb8ba31fac6536f2c8cde30df859013f59e4bcc5b8d43901cb3654a8e0a5b
+httpx==0.23.0; python_version >= "3.9" and python_version < "4.0" \
+    --hash=sha256:42974f577483e1e932c3cdc3cd2303e883cbfba17fe228b0f63589764d7b9c4b \
+    --hash=sha256:f28eac771ec9eb4866d3fb4ab65abd42d38c424739e80c08d8d20570de60b0ef
 huggingface-hub==0.18.0 ; python_version >= "3.9" and python_version < "4.0" \
     --hash=sha256:10eda12b9c1cfa800b4b7c096b3ace8843734c3f28d69d1c243743fb7d7a2e81 \
     --hash=sha256:ee0b6b68acbf6aeb6d083ea081e981c277a1104b82ab67fdf6780ff5396830af
