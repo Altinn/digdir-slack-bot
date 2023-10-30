@@ -128,14 +128,18 @@ async def rag_with_typesense(user_input):
         pp.pprint(md_docs)
         
         loaded_docs = []
+        docs_length = 0
+
 
         for doc in md_docs:
             with open(doc['metadata']['file_path'], 'w') as f:
                 f.write(doc['page_content'])
                 f.flush()
                 loaded_doc = UnstructuredMarkdownLoader(doc['metadata']['file_path']).load()[0]
-                loaded_docs.append(loaded_doc)
-               
+                docs_length += len(loaded_doc.page_content)
+                if docs_length < 15000:
+                    loaded_docs.append(loaded_doc)
+                
 
         # print(f'loaded markdown docs')
         # pp.pprint(loaded_docs)
@@ -154,6 +158,7 @@ async def rag_with_typesense(user_input):
     response = {
         'result': result,
         'source_documents': md_docs,
+        'source_urls': unique_urls,
         'search_terms': extract_search_terms.searchTerms,
     }
     print(f"Time to run load_qa_chain: {chain_end - chain_start} seconds")
