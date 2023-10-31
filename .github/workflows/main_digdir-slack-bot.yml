@@ -22,16 +22,9 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Create and start virtual environment
-        run: |
-          pip install poetry
-      
       - name: Poetry install dependencies
         run: |
           poetry install
-      - name: Convert dependencies to requirements.txt format
-        run: |
-          poetry export -f requirements.txt --output requirements.txt
         
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
       
