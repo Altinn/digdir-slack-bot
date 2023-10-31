@@ -22,6 +22,10 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install poetry
+        run: |
+          pip install poetry
+      
       - name: Poetry install dependencies
         run: |
           poetry install
