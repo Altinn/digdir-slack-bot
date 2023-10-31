@@ -17,7 +17,7 @@ chain_name = "[choose_team]"
 async def run_bot_async(app, hitl_config, say, msg_body, text):
     assert isinstance(app, App), "app must be an instance of slack_bolt.App"
 
-    src_msg_metadata = utils.slack_utils.get_message_metadata(msg_body)
+    src_msg_metadata = utils.slack_utils.get_event_context(msg_body)
 
     main_channel_id = msg_body.get("event").get("channel")
     target_channel_id = main_channel_id

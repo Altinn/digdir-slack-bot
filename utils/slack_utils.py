@@ -1,19 +1,30 @@
 from slack_sdk.errors import SlackApiError
 import datetime
 import pytz
+from dataclasses import dataclass
 
 
-def get_message_metadata(msg_body):
+@dataclass
+class SlackContext:
+    ts: str
+    thread_ts: str
+    channel: str
+    team: str
+    user: str
+    time_utc: str
+
+
+def get_event_context(msg_body) -> SlackContext:
     evt = msg_body.get('event')
-    source_msg_meta = {
-        'ts': evt.get('ts'),
-        'thread_ts': evt.get('thread_ts'),
-        'channel': evt.get('channel'),
-        'team': evt.get('team'),
-        'user': evt.get('user')                
-    }
-
-    return source_msg_meta
+    slack_context = SlackContext(
+        ts=evt.get('ts'),
+        thread_ts=evt.get('thread_ts'),
+        channel=evt.get('channel'),
+        team=evt.get('team'),
+        user=evt.get('user'),
+        time_utc= unixtime_to_timestamptz(msg_body.get("event_time", ""))
+    )
+    return slack_context
 
 def unixtime_to_timestamptz(unixtime):
     if unixtime:

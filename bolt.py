@@ -56,7 +56,7 @@ def event_test(say):
 def handle_message_events(ack, say, body, logger):
     print(f"-- incoming slack message event payload --")
     pp.pprint(body)
-    src_msg_metadata = slack_utils.get_message_metadata(body)
+    src_evt_context = slack_utils.get_event_context(body)
 
     evt = body["event"]
     if evt.get("type") == "message":
@@ -84,10 +84,7 @@ def handle_message_events(ack, say, body, logger):
             event_time_tz = slack_utils.unixtime_to_timestamptz(body.get('event_time'))            
                 
             entry = BotLogEntry(
-                slack_ts= src_msg_metadata['ts'],
-                thread_ts= src_msg_metadata['thread_ts'],
-                slack_user_id= src_msg_metadata['user'],
-                slack_msg_time= event_time_tz,
+                slack_context= src_evt_context,
                 elapsed_ms= 0,
                 step_name= 'select_bot',
                 payload= {"user_input": clean_text, "bot_name": bot_name}

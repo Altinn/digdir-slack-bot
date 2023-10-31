@@ -16,10 +16,10 @@ chain_name = "[docs]"
 
 
 async def run_bot_async(app, hitl_config, say, msg_body, text):
-    src_msg_metadata = slack_utils.get_message_metadata(msg_body)
+    src_evt_context = slack_utils.get_event_context(msg_body)
 
     print(f"src_msg_metadata: ")
-    pp.pprint(src_msg_metadata)
+    pp.pprint(src_evt_context)
 
     main_channel_id = msg_body.get("event").get("channel")
     target_channel_id = main_channel_id
@@ -43,14 +43,9 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     message_category = response["text"]
     print(f"Message category: {message_category}")
 
-    event_time_tz = slack_utils.unixtime_to_timestamptz(msg_body.get("event_time", ""))
-
 
     bot_log(BotLogEntry(
-        slack_ts= src_msg_metadata['ts'],
-        thread_ts= src_msg_metadata['thread_ts'],
-        slack_user_id= src_msg_metadata['user'],
-        slack_msg_time= event_time_tz,
+        slack_context= src_evt_context,
         elapsed_ms= slack_utils.time_s_to_ms(timeit.default_timer() - msg_categorize_start_time),
         step_name= 'categorize_message',
         payload= {"user_input": text, "bot_name": 'docs', 'message_category': message_category}
@@ -112,10 +107,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         end = timeit.default_timer()
                 
         bot_log(BotLogEntry(
-            slack_ts= src_msg_metadata['ts'],
-            thread_ts= src_msg_metadata['thread_ts'],
-            slack_user_id= src_msg_metadata['user'],
-            slack_msg_time= event_time_tz,
+            slack_context= src_evt_context,
             elapsed_ms= slack_utils.time_s_to_ms(end - start),
             step_name= 'rag_with_typesense',
             payload= {"user_input": text, "bot_name": 'docs',
@@ -150,7 +142,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
             "accessory": {
                 "type": "button",
                 "text": {"type": "plain_text", "text": f"Send"},
-                "value": f'{src_msg_metadata["team"]}|{src_msg_metadata["channel"]}|{src_msg_metadata["ts"]}',
+                "value": f'{src_evt_context["team"]}|{src_evt_context["channel"]}|{src_evt_context["ts"]}',
                 "action_id": "docs|qa|approve_reply",
             },
         },
@@ -206,7 +198,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
                         "type": "plain_text",
                         "text": f"Send",
                     },
-                    "value": f'{src_msg_metadata["team"]}|{src_msg_metadata["channel"]}|{src_msg_metadata["ts"]}',
+                    "value": f'{src_evt_context["team"]}|{src_evt_context["channel"]}|{src_evt_context["ts"]}',
                     "action_id": "docs|qa|approve_reply",
                 },
             },
