@@ -31,8 +31,8 @@ typesense = "^0.17.0"
 markdownify = "^0.11.6"
 beautifulsoup4 = "^4.12.2"
 ctransformers = "^0.2.27"
-supabase-py = "^0.0.2"
 pytz = "^2023.3.post1"
+supabase = "^2.0.1"
 
 [build-system]
 requires = ["poetry-core"]

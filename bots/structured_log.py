@@ -1,5 +1,5 @@
 import os
-from supabase_py import create_client, Client
+from supabase import create_client, Client
 from box import Box
 import dataclasses
 from typing import Any, Dict
