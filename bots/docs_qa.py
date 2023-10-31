@@ -142,7 +142,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
             "accessory": {
                 "type": "button",
                 "text": {"type": "plain_text", "text": f"Send"},
-                "value": f'{src_evt_context["team"]}|{src_evt_context["channel"]}|{src_evt_context["ts"]}',
+                "value": f'{src_evt_context.team}|{src_evt_context.channel}|{src_evt_context.ts}',
                 "action_id": "docs|qa|approve_reply",
             },
         },
@@ -198,7 +198,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
                         "type": "plain_text",
                         "text": f"Send",
                     },
-                    "value": f'{src_evt_context["team"]}|{src_evt_context["channel"]}|{src_evt_context["ts"]}',
+                    "value": f'{src_evt_context.team}|{src_evt_context.channel}|{src_evt_context.ts}',
                     "action_id": "docs|qa|approve_reply",
                 },
             },
