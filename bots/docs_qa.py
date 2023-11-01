@@ -5,7 +5,7 @@ from slack_sdk.errors import SlackApiError
 import openai.error
 import utils.slack_utils as slack_utils
 from bots.structured_log import bot_log, BotLogEntry
-from docs_qa.main import rag_with_typesense
+from docs_qa.rag_manual_stuff import rag_with_typesense
 from channel_msg_categorize.run_chain import (
     run_chain_async as run_channel_msg_categorize,
 )
@@ -114,7 +114,8 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
                       'search_terms': response['search_terms'],
                       'answer': response['result'],
                       'source_urls': response['source_urls'],
-                      } 
+                      },
+            rag_llm_feedback= response['llm_rag_feedback']
         ))
     except openai.error.ServiceUnavailableError as e:
         print(f"OpenAI API error: {e}")
@@ -146,6 +147,10 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
                 "action_id": "docs|qa|approve_reply",
             },
         },
+        {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f"Relevant links:\n{response['llm_rag_feedback']}" }
+        }
     ]
     reply_text = (
         f"Suggested reply:\n{answer}"
@@ -170,6 +175,8 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
 
     # known_path_segment = "altinn/docs/content"
     known_path_segment = "https://docs.altinn.studio"
+
+
 
     # Process source documents
     source_docs = response["source_documents"]
