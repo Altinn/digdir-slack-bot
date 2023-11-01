@@ -194,7 +194,7 @@ def handle_action_docs_qa_approve_reply(ack, body, logger):
     bot_id = body["message"]["bot_id"]
 
     blocks_without_sendbutton = copy.deepcopy(body["message"]["blocks"])
-    del blocks_without_sendbutton[-1]["accessory"]
+    del blocks_without_sendbutton[-2]["accessory"]
     print("blocks_without_sendbutton:")
     pp.pprint(blocks_without_sendbutton)
 
