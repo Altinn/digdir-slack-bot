@@ -5,7 +5,7 @@ from slack_sdk.errors import SlackApiError
 import openai.error
 import utils.slack_utils as slack_utils
 from bots.structured_log import bot_log, BotLogEntry
-from docs_qa.main import rag_with_typesense
+from docs_qa.rag_with_typesense import rag_with_typesense
 from channel_msg_categorize.run_chain import (
     run_chain_async as run_channel_msg_categorize,
 )
@@ -170,6 +170,8 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
 
     # known_path_segment = "altinn/docs/content"
     known_path_segment = "https://docs.altinn.studio"
+
+
 
     # Process source documents
     source_docs = response["source_documents"]
