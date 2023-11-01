@@ -2,8 +2,7 @@ import box
 import timeit
 import yaml
 import pprint
-import tempfile
-import os
+import json
 
 from langchain.pydantic_v1 import BaseModel, Field
 from langchain.chains.question_answering import load_qa_chain
@@ -132,9 +131,11 @@ async def rag_with_typesense(user_input):
 
     chain_end = timeit.default_timer()
 
+    relevant_sources = [context.source for context in result['function'].relevant_contexts]
+
     response = {
-        'result': result['function'].helpful_answer,
-        'llm_rag_feedback': result['function'].relevant_contexts,
+        'result': result['function'].helpful_answer,        
+        'llm_rag_feedback': relevant_sources,
         'source_documents': loaded_docs,
         'source_urls': loaded_urls,
         'search_terms': extract_search_terms.searchTerms,

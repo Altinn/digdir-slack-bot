@@ -147,6 +147,10 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
                 "action_id": "docs|qa|approve_reply",
             },
         },
+        {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f"Relevant links:\n{response['llm_rag_feedback']}" }
+        }
     ]
     reply_text = (
         f"Suggested reply:\n{answer}"
