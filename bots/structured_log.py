@@ -9,8 +9,8 @@ class BotLogEntry:
     slack_context: SlackContext
     elapsed_ms: int
     step_name: str
-    payload: object
-    # llm_rag_feedback: object
+    payload: object = None
+    llm_rag_feedback: object = None
 
 # create single supabase client
 supabase: Client = create_client(os.environ['SLACK_BOT_SUPABASE_URL'],

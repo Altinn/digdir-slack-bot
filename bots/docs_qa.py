@@ -5,7 +5,7 @@ from slack_sdk.errors import SlackApiError
 import openai.error
 import utils.slack_utils as slack_utils
 from bots.structured_log import bot_log, BotLogEntry
-from docs_qa.rag_with_typesense import rag_with_typesense
+from docs_qa.rag_manual_stuff import rag_with_typesense
 from channel_msg_categorize.run_chain import (
     run_chain_async as run_channel_msg_categorize,
 )
@@ -114,7 +114,8 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
                       'search_terms': response['search_terms'],
                       'answer': response['result'],
                       'source_urls': response['source_urls'],
-                      } 
+                      },
+            llm_rag_feedback= response['llm_rag_feedback']
         ))
     except openai.error.ServiceUnavailableError as e:
         print(f"OpenAI API error: {e}")
