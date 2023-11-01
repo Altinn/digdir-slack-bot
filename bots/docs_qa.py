@@ -115,7 +115,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
                       'answer': response['result'],
                       'source_urls': response['source_urls'],
                       },
-            llm_rag_feedback= response['llm_rag_feedback']
+            rag_llm_feedback= response['llm_rag_feedback']
         ))
     except openai.error.ServiceUnavailableError as e:
         print(f"OpenAI API error: {e}")
