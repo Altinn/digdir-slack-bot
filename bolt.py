@@ -38,7 +38,7 @@ bot_query_word_team = "[team] "
 
 pp = pprint.PrettyPrinter(indent=2)
 
-hitl_config = {"enabled": True, "qa_channel": os.environ["SLACK_BOT_REVIEW_CHANNEL_ID"]}
+hitl_config = {"enabled": False, "qa_channel": os.environ["SLACK_BOT_REVIEW_CHANNEL_ID"]}
 
 
 @app.command("/hello-socket-mode")
