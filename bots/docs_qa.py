@@ -58,37 +58,29 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         )
         return
 
-    quoted_input = text.replace("\n", "\n>")
 
-    thread1_text = (
-        f'Incoming message from <#{main_channel_id}>\n>  "{quoted_input}"'
+    first_message_text = (
+        f"<{src_msg_link}|Incoming message> from <#{main_channel_id}>"
         if hitl_enabled
-        else f'Let me figure out which team would be best suited to handle the following inquiry:\n>  "{quoted_input}"'
+        else f""
     )
+    quoted_input = text.replace("\n", "\n>")    
 
-    blocks = (
-        [{}]
-        if not hitl_enabled
-        else [
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": f"<{src_msg_link}|Incoming message> from <#{main_channel_id}>",
-                },
-            },
-        ]
-    )
-
-    startMsg = app.client.chat_postMessage(
-        text=thread1_text,
-        blocks=blocks,
-        channel=target_channel_id,
-    )
-
-    thread_ts = startMsg["ts"]
-    print(f"startMsg.ts: {thread_ts}")
-    pp.pprint(startMsg)
+    if hitl_enabled:
+        startMsg = app.client.chat_postMessage(
+            text=first_message_text,
+            blocks=[{
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": first_message_text,
+                        },
+                    }],
+            channel=target_channel_id,
+        )
+        thread_ts = startMsg["ts"]
+    else:
+        thread_ts = src_evt_context.ts
 
     if hitl_enabled:
         thread1 = app.client.chat_postMessage(
@@ -98,7 +90,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         )
     else:
         thread1 = say(
-            text="This should only take a few seconds...", thread_ts=thread_ts
+            text="Querying our documentation...", thread_ts=thread_ts
         )
 
     try:
