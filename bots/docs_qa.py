@@ -119,6 +119,22 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
 
     answer = response["result"]
 
+    answer_block = ({
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": answer},
+            "accessory": {
+                "type": "button",
+                "text": {"type": "plain_text", "text": f"Send"},
+                "value": f'{src_evt_context.team}|{src_evt_context.channel}|{src_evt_context.ts}',
+                "action_id": "docs|qa|approve_reply",
+            },
+        }
+        if hitl_enabled
+        else {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": answer},            
+        })
+    
     blocks = [
         {
             "type": "section",
@@ -129,16 +145,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         },
         {"type": "section", "text": {"type": "mrkdwn", "text": "Results"}},
         {"type": "divider"},
-        {
-            "type": "section",
-            "text": {"type": "mrkdwn", "text": answer},
-            "accessory": {
-                "type": "button",
-                "text": {"type": "plain_text", "text": f"Send"},
-                "value": f'{src_evt_context.team}|{src_evt_context.channel}|{src_evt_context.ts}',
-                "action_id": "docs|qa|approve_reply",
-            },
-        },
+        answer_block,
         {
             "type": "section",
             "text": {"type": "mrkdwn", "text": f"Relevant links:\n{response['llm_rag_feedback']}" }
@@ -188,7 +195,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
 
         sourceSummary = f"Source #{i+1}: {source}"
         source_blocks = [
-            {
+            ({
                 "type": "section",
                 "text": {"type": "mrkdwn", "text": f"{sourceSummary}"},
                 "accessory": {
@@ -200,7 +207,12 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
                     "value": f'{src_evt_context.team}|{src_evt_context.channel}|{src_evt_context.ts}',
                     "action_id": "docs|qa|approve_reply",
                 },
-            },
+            }
+            if hitl_enabled
+            else {
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": f"{sourceSummary}"},                
+            }),
         ]
         app.client.chat_postMessage(
             thread_ts=thread_ts,
