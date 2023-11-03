@@ -2,22 +2,18 @@ import box
 import timeit
 import yaml
 import pprint
-import json
 
 from langchain.pydantic_v1 import BaseModel, Field
-from langchain.chains.question_answering import load_qa_chain
 from langchain.prompts import ChatPromptTemplate
 from langchain.chains.openai_functions import (
     create_structured_output_chain
 )
-from langchain.document_loaders import UnstructuredMarkdownLoader
 from docs_qa.chain import build_llm
 from docs_qa.prompts import qa_template
 from docs_qa.extract_search_terms import run_query_async
 from .html_to_markdown import html_to_markdown
 from docs_qa.typesense import typesense_search_by_terms
 from typing import Sequence
-
 
 
 pp = pprint.PrettyPrinter(indent=2)
@@ -88,7 +84,7 @@ async def rag_with_typesense(user_input):
             }
         }    
 
-        if docs_length + len(loaded_doc['page_content']) > 15000:
+        if docs_length + len(loaded_doc['page_content']) > cfg.MAX_CONTEXT_LENGTH:
             break
 
         docs_length += len(loaded_doc['page_content'])
@@ -101,17 +97,10 @@ async def rag_with_typesense(user_input):
     download_end = timeit.default_timer()    
     print(f"Time to download and convert source URLs: {download_end - download_start} seconds")
 
-    print(f'Starting load_qa_chain...')
+    print(f'Starting RAG structured output chain, llm: {cfg.MODEL_TYPE}')
     chain_start = timeit.default_timer()
 
     llm = build_llm()
-
-    # prompt = RagPrompt()    
-    # prompt.system_prompt = 'You are a helpful assistant.'
-    # prompt.bot_prompt = qa_template
-    # prompt.context = yaml.dump(loaded_docs)
-    # prompt.user_input = user_input
-
     prompt = ChatPromptTemplate.from_messages(
             [('system', 'You are a helpful assistant.'),
              ('human',  qa_template)]
@@ -122,14 +111,11 @@ async def rag_with_typesense(user_input):
         "context": yaml.dump(loaded_docs),
         "question": user_input
     })
-
-    print(f'runnable result:')
-    pp.pprint(result)
-
-    # chain = load_qa_chain(llm, chain_type="stuff", verbose=False)
-    # result = chain.run(input_documents=loaded_docs, question=user_input)
-
     chain_end = timeit.default_timer()
+    print(f"Time to run RAG structured output chain: {chain_end - chain_start} seconds")
+
+    # print(f'runnable result:')
+    # pp.pprint(result)
 
     relevant_sources = [context.source for context in result['function'].relevant_contexts]
 
@@ -140,8 +126,7 @@ async def rag_with_typesense(user_input):
         'source_urls': loaded_urls,
         'search_terms': extract_search_terms.searchTerms,
     }
-    print(f"Time to run load_qa_chain: {chain_end - chain_start} seconds")
 
-    pp.pprint(response)
+    # pp.pprint(response)
 
     return response

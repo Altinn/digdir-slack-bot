@@ -70,7 +70,7 @@ async def rag_with_typesense(user_input):
                 f.flush()
                 loaded_doc = UnstructuredMarkdownLoader(doc['metadata']['file_path']).load()[0]
                 docs_length += len(loaded_doc.page_content)
-                if docs_length < 15000:
+                if docs_length < cfg.MAX_CONTEXT_LENGTH:
                     loaded_docs.append(loaded_doc)
                 
 
