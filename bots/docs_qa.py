@@ -38,15 +38,14 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     )
 
     # categorize message, respond to messages of type '[Support Request]'
-    msg_categorize_start_time = timeit.default_timer()
-    response = await run_channel_msg_categorize(text)
-    message_category = response["text"]
+    categorize_response = await run_channel_msg_categorize(text)
+    message_category = categorize_response["text"]
     print(f"Message category: {message_category}")
 
 
     bot_log(BotLogEntry(
         slack_context= src_evt_context,
-        elapsed_ms= slack_utils.time_s_to_ms(timeit.default_timer() - msg_categorize_start_time),
+        elapsed_ms= slack_utils.time_s_to_ms(categorize_response['duration']),
         step_name= 'categorize_message',
         payload= {"user_input": text, "bot_name": 'docs', 'message_category': message_category}
     ))
@@ -94,20 +93,18 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         )
 
     try:
-        start = timeit.default_timer()
-        response = await rag_with_typesense(text)
-        end = timeit.default_timer()
+        rag_response = await rag_with_typesense(text)        
                 
         bot_log(BotLogEntry(
             slack_context= src_evt_context,
-            elapsed_ms= slack_utils.time_s_to_ms(end - start),
+            elapsed_ms= slack_utils.time_s_to_ms(rag_response['durations']['total']),
             step_name= 'rag_with_typesense',
             payload= {"user_input": text, "bot_name": 'docs',
-                      'search_terms': response['search_terms'],
-                      'answer': response['result'],
-                      'source_urls': response['source_urls'],
+                      'search_queries': rag_response['search_queries'],
+                      'answer': rag_response['result'],
+                      'source_urls': rag_response['source_urls'],
                       },
-            rag_llm_feedback= response['llm_rag_feedback']
+            rag_llm_feedback= rag_response['llm_rag_feedback']
         ))
     except openai.error.ServiceUnavailableError as e:
         print(f"OpenAI API error: {e}")
@@ -117,7 +114,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
             channel=target_channel_id,
         )
 
-    answer = response["result"]
+    answer = rag_response["result"]
 
     answer_block = ({
             "type": "section",
@@ -140,7 +137,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": f"Search terms extracted:\n> {response['search_terms']}",
+                "text": f"Search queries generated:\n> {rag_response['search_queries']}",
             },
         },
         {"type": "section", "text": {"type": "mrkdwn", "text": "Results"}},
@@ -148,7 +145,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         answer_block,
         {
             "type": "section",
-            "text": {"type": "mrkdwn", "text": f"Relevant links:\n{response['llm_rag_feedback']}" }
+            "text": {"type": "mrkdwn", "text": f"Relevant links:\n{rag_response['llm_rag_feedback']}" }
         }
     ]
     reply_text = (
@@ -178,7 +175,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
 
 
     # Process source documents
-    source_docs = response["source_documents"]
+    source_docs = rag_response["source_documents"]
     for i, doc in enumerate(source_docs):
         print(f"doc {i}:\n{doc}")
         source = doc["metadata"]["source"]
@@ -224,5 +221,10 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     say(
         thread_ts=thread_ts,
         channel=target_channel_id,
-        text=f"Time to retrieve response: {round(end - start, 1)} seconds.",
+        blocks=
+            [{
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": f"Processing times (sec):\n```\n{json.dumps(rag_response['durations'], indent=2)}```"},
+            }],
+        text= f"Processing times (sec): {rag_response['durations']['total']}",
     )

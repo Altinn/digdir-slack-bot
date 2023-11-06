@@ -7,10 +7,10 @@ import os
 
 from langchain.chains.question_answering import load_qa_chain
 from langchain.document_loaders import UnstructuredMarkdownLoader
-from docs_qa.chain import build_llm
+from docs_qa.chains import build_llm
 from docs_qa.extract_search_terms import run_query_async
 from .html_to_markdown import html_to_markdown
-from docs_qa.typesense import typesense_search_by_terms
+from docs_qa.typesense import typesense_search_multiple
 
 
 pp = pprint.PrettyPrinter(indent=2)
@@ -22,9 +22,10 @@ with open('docs_qa/config/config.yml', 'r', encoding='utf8') as ymlfile:
 
 
 async def rag_with_typesense(user_input):
-    extract_search_terms = await run_query_async(user_input)
-    pp.pprint(extract_search_terms)
-    search_response = await typesense_search_by_terms(extract_search_terms.searchTerms)
+    extract_search_queries = await run_query_async(user_input)
+    pp.pprint(extract_search_queries)
+
+    search_response = await typesense_search_multiple(extract_search_queries)
     pp.pprint(search_response)
 
     documents = [
@@ -92,7 +93,7 @@ async def rag_with_typesense(user_input):
         'result': result,
         'source_documents': md_docs,
         'source_urls': unique_urls,
-        'search_terms': extract_search_terms.searchTerms,
+        'search_terms': extract_search_queries.searchQueries,
     }
     print(f"Time to run load_qa_chain: {chain_end - chain_start} seconds")
 
