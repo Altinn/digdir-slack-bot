@@ -1,11 +1,11 @@
-'''
-===========================================
-        Module: Chain functions
-===========================================
-'''
 import box
 import yaml
 import os
+import openai
+import instructor
+from pydantic import BaseModel, Field
+import pprint
+from utils.openai_utils import json_gpt
 
 from langchain.prompts import PromptTemplate 
 from langchain.chains import RetrievalQA
@@ -14,10 +14,32 @@ from langchain.vectorstores import FAISS
 
 from docs_qa.prompts import qa_template
 from docs_qa.llm import build_llm
+from utils.openai_utils import json_gpt
 
-# Import config vars
+
+# module init
 with open('docs_qa/config/config.yml', 'r', encoding='utf8') as ymlfile:
     cfg = box.Box(yaml.safe_load(ymlfile))
+
+instructor.patch()
+openai.api_key = os.environ['OPENAI_API_KEY_ALTINN3_DEV']
+pp = pprint.PrettyPrinter(indent=2)
+
+
+
+async def generate_hypothetical_answer(user_input) -> str:    
+    HA_INPUT = f"""Generate a hypothetical answer to the user's question. This answer will be used to rank search results. 
+Pretend you have all the information you need to answer, but don't use any actual facts. Instead, use placeholders
+like NAME did something, or NAME said something at PLACE. 
+
+User question: {user_input}
+
+Format: {{"hypotheticalAnswer": "hypothetical answer text"}}
+"""
+
+    hypothetical_answer = json_gpt(HA_INPUT)["hypotheticalAnswer"]
+
+    return hypothetical_answer
 
 
 def set_qa_prompt():
@@ -40,8 +62,7 @@ def build_retrieval_qa(llm, prompt, vectordb):
     return dbqa
 
 def setup_dbqa():
-    api_key = os.environ['OPENAI_API_KEY_ALTINN3_DEV']
-    embeddings = OpenAIEmbeddings(openai_api_key=api_key)
+    embeddings = OpenAIEmbeddings()
     vectordb = FAISS.load_local(cfg.DB_FAISS_PATH, embeddings)
     llm = build_llm()
     qa_prompt = set_qa_prompt()

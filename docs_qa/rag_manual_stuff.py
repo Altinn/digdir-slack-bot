@@ -8,11 +8,11 @@ from langchain.prompts import ChatPromptTemplate
 from langchain.chains.openai_functions import (
     create_structured_output_chain
 )
-from docs_qa.chain import build_llm
+from docs_qa.chains import build_llm
 from docs_qa.prompts import qa_template
 from docs_qa.extract_search_terms import run_query_async
 from .html_to_markdown import html_to_markdown
-from docs_qa.typesense import typesense_search_by_terms
+from docs_qa.typesense import typesense_search_multiple
 from typing import Sequence
 
 
@@ -35,10 +35,27 @@ class RagPromptReply(BaseModel):
 
 
 async def rag_with_typesense(user_input):
-    extract_search_terms = await run_query_async(user_input)
-    pp.pprint(extract_search_terms)
-    search_response = await typesense_search_by_terms(extract_search_terms.searchTerms)
-    pp.pprint(search_response)
+
+    durations = {
+        'generate_searches': 0,
+        'execute_searches': 0,
+        'download_docs': 0,
+        'rag_query': 0,
+        'total': 0
+    }
+    total_start = start = timeit.default_timer()
+    extract_search_queries = await run_query_async(user_input)
+    durations['generate_searches'] = timeit.default_timer() - start
+
+    # print(f'generated queries:')
+    # pp.pprint(extract_search_queries)
+
+    start = timeit.default_timer()
+    search_response = await typesense_search_multiple(extract_search_queries)
+    durations['execute_searches'] = timeit.default_timer() - start
+
+    # print(f'search response:')
+    # pp.pprint(search_response)
 
     search_hits = [
         {
@@ -50,14 +67,10 @@ async def rag_with_typesense(user_input):
         for document in hit['hits']
     ]    
 
-    print(f'Document IDs')
-    pp.pprint(search_hits)
+    # print(f'Document IDs')
+    # pp.pprint(search_hits)
 
-    # unique_urls = list(set([document['url'] for document in documents]))
-    # print(f'Unique URLs')
-    # pp.pprint(unique_urls)
-
-    download_start = timeit.default_timer()
+    start = timeit.default_timer()
     # download source HTML and convert to markdown - should be done by scraper    
 
     loaded_docs = []
@@ -94,12 +107,11 @@ async def rag_with_typesense(user_input):
 
 
         
-    download_end = timeit.default_timer()    
-    print(f"Time to download and convert source URLs: {download_end - download_start} seconds")
+    durations['download_docs'] = timeit.default_timer() - start
 
     print(f'Starting RAG structured output chain, llm: {cfg.MODEL_TYPE}')
-    chain_start = timeit.default_timer()
-
+    
+    start = timeit.default_timer()
     llm = build_llm()
     prompt = ChatPromptTemplate.from_messages(
             [('system', 'You are a helpful assistant.'),
@@ -111,8 +123,10 @@ async def rag_with_typesense(user_input):
         "context": yaml.dump(loaded_docs),
         "question": user_input
     })
-    chain_end = timeit.default_timer()
-    print(f"Time to run RAG structured output chain: {chain_end - chain_start} seconds")
+    durations['rag_query'] = timeit.default_timer() - start
+    durations['total'] = timeit.default_timer() - total_start
+
+    # print(f"Time to run RAG structured output chain: {chain_end - chain_start} seconds")
 
     # print(f'runnable result:')
     # pp.pprint(result)
@@ -124,7 +138,8 @@ async def rag_with_typesense(user_input):
         'llm_rag_feedback': relevant_sources,
         'source_documents': loaded_docs,
         'source_urls': loaded_urls,
-        'search_terms': extract_search_terms.searchTerms,
+        'search_queries': extract_search_queries.searchQueries,
+        'durations': durations
     }
 
     # pp.pprint(response)

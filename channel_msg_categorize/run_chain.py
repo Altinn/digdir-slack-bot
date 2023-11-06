@@ -16,7 +16,12 @@ dbqa = setup_dbqa()
 
 async def run_chain_async(user_input):
     print(f'user_input:', user_input)
+
+    start = timeit.default_timer()
     response = dbqa(user_input)
+    end = timeit.default_timer()
+    response['duration'] = end - start
+
     return response
 
 
@@ -24,8 +29,7 @@ def main(user_input):
 
     start = timeit.default_timer()
     response = asyncio.run(run_chain_async(user_input))
-    end = timeit.default_timer()
-
+    
     answer = response["text"]
 
     print(f'\nAnswer:\n{answer}')
