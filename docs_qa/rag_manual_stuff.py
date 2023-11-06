@@ -67,7 +67,7 @@ async def rag_with_typesense(user_input):
         for document in hit['hits']
     ]    
 
-    # print(f'Document IDs')
+    # print(f'All source document urls:')
     # pp.pprint(search_hits)
 
     start = timeit.default_timer()
@@ -90,17 +90,22 @@ async def rag_with_typesense(user_input):
         if unique_url in loaded_urls:
             continue
 
+        doc_md = await html_to_markdown(unique_url, "#body-inner")
+        doc_trimmed = doc_md[:cfg.MAX_SOURCE_LENGTH]
+
         loaded_doc = {
-            'page_content': await html_to_markdown(unique_url, "#body-inner"),    
+            'page_content': doc_trimmed,
             'metadata': {            
                 'source': unique_url,                                
             }
         }    
+        print(f'loaded converted html to md doc, length= {len(doc_trimmed)}, url= {unique_url}')
+        # pp.pprint(loaded_doc)
 
-        if docs_length + len(loaded_doc['page_content']) > cfg.MAX_CONTEXT_LENGTH:
+        if (docs_length + len(doc_trimmed)) > cfg.MAX_CONTEXT_LENGTH:
             break
 
-        docs_length += len(loaded_doc['page_content'])
+        docs_length += len(doc_trimmed)
         loaded_docs.append(loaded_doc)
         loaded_urls.append(unique_url)
         loaded_search_hits.append(search_hit)                
@@ -108,6 +113,9 @@ async def rag_with_typesense(user_input):
 
         
     durations['download_docs'] = timeit.default_timer() - start
+
+    print(f'stuffed source document urls:')
+    # pp.pprint(loaded_urls)
 
     print(f'Starting RAG structured output chain, llm: {cfg.MODEL_TYPE}')
     

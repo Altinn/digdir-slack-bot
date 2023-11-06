@@ -25,7 +25,7 @@ async def rag_with_typesense(user_input):
     extract_search_queries = await run_query_async(user_input)
     pp.pprint(extract_search_queries)
 
-    search_response = await typesense_search_multiple(extract_search_queries)
+    search_response = await typesense_search_multiple(extract_search_queries[:10])
     pp.pprint(search_response)
 
     documents = [
@@ -38,8 +38,8 @@ async def rag_with_typesense(user_input):
         for document in hit['hits']
     ]    
 
-    print(f'Document IDs')
-    pp.pprint(documents)
+    # print(f'Document IDs')
+    # pp.pprint(documents)
 
     unique_urls = list(set([document['url'] for document in documents]))
     print(f'Unique URLs')

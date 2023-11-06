@@ -1,4 +1,4 @@
-import timeit
+import json
 import pprint
 
 from slack_sdk.errors import SlackApiError
@@ -113,6 +113,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
             text=f"OpenAI API error: {e}",
             channel=target_channel_id,
         )
+        return
 
     answer = rag_response["result"]
 
