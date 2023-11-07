@@ -6,12 +6,12 @@ DATA_PATH: '/Users/bdbrodie/dev/altinn/docs/content/'
 DB_FAISS_PATH: 'docs_qa/vectorstore/db_faiss'
 # MODEL_TYPE: 'mpt'
 # MODEL_BIN_PATH: 'models/mpt-7b-instruct.ggmlv3.q8_0.bin'
-MODEL_TYPE: 'gpt-3.5-turbo-16k'
+MODEL_TYPE: 'gpt-4-1106-preview'
 MODEL_BIN_PATH: ''
 MAX_NEW_TOKENS: 512
 TEMPERATURE: 1.0
-MAX_CONTEXT_LENGTH: 14000
-MAX_SOURCE_LENGTH: 2000
+MAX_CONTEXT_LENGTH: 9000
+MAX_SOURCE_LENGTH: 1000
 TYPESENSE_CONFIG:
   nodes:
   - host: 'altinn-typesense-api.azurewebsites.net'
