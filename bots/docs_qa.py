@@ -98,12 +98,13 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         bot_log(BotLogEntry(
             slack_context= src_evt_context,
             elapsed_ms= slack_utils.time_s_to_ms(rag_response['durations']['total']),
+            durations= rag_response['durations'],
             step_name= 'rag_with_typesense',
             payload= {"user_input": text, "bot_name": 'docs',
                       'search_queries': rag_response['search_queries'],
                       'answer': rag_response['result'],
                       'source_urls': rag_response['source_urls'],
-                      },
+                      },            
             rag_llm_feedback= rag_response['llm_rag_feedback']
         ))
     except openai.error.ServiceUnavailableError as e:

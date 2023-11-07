@@ -11,6 +11,7 @@ class BotLogEntry:
     step_name: str
     payload: object = None
     rag_llm_feedback: object = None
+    durations: object = None
 
 # create single supabase client
 supabase: Client = create_client(os.environ['SLACK_BOT_SUPABASE_URL'],
