@@ -68,6 +68,13 @@ def upload_issues_to_typesense(org_repo, max_issue_count=120):
                 # print(f'Incoming issue')
                 # pp.pprint(issue)
 
+                body_trimmed = issue.get("body", "")
+                if body_trimmed is None:
+                    body_trimmed = ""
+                related_issue_start = body_trimmed.find("## Related Issue(s)")
+                if related_issue_start > -1:
+                    body_trimmed = body_trimmed[:related_issue_start]
+
                 processed_issue = {
                     "id": str(issue["id"]),
                     "repository": issue["repository_url"].replace('https://api.github.com/repos/', ''),
@@ -77,7 +84,7 @@ def upload_issues_to_typesense(org_repo, max_issue_count=120):
                     "created_at": int(datetime.strptime(issue["created_at"], '%Y-%m-%dT%H:%M:%SZ').timestamp()),
                     "updated_at": int(datetime.strptime(issue["updated_at"], '%Y-%m-%dT%H:%M:%SZ').timestamp()),                    
                     "closed_at": None if issue["closed_at"] is None else int(datetime.strptime(issue["closed_at"], '%Y-%m-%dT%H:%M:%SZ').timestamp()),
-                    "body": issue["body"],
+                    "body": body_trimmed,
                     "labels": [label["name"] for label in issue["labels"]],
                     "is_pr": "pull_request" in issue
                 }
