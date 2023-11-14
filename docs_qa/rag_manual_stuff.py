@@ -139,7 +139,10 @@ async def rag_with_typesense(user_input):
     # print(f'runnable result:')
     # pp.pprint(result)
 
-    relevant_sources = [context.source for context in result['function'].relevant_contexts]
+    if 'relevant_contexts' in result['function']:
+        relevant_sources =  [context.source for context in result['function'].relevant_contexts]
+    else:
+        relevant_sources = []
 
     response = {
         'result': result['function'].helpful_answer,        
