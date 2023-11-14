@@ -18,7 +18,7 @@ from typing import Sequence
 pp = pprint.PrettyPrinter(indent=2)
 
 # Import config vars
-with open('docs_qa/config/config.yml', 'r', encoding='utf8') as ymlfile:
+with open('github_qa/config.yml', 'r', encoding='utf8') as ymlfile:
     cfg = box.Box(yaml.safe_load(ymlfile))
 
 
@@ -72,6 +72,7 @@ async def rag_with_typesense(user_input):
     # need to preserve order in documents list
     # should only append doc if context is not too big
     loaded_docs = []
+    loaded_source_urls = []
     doc_index = 0
     docs_length = 0
 
@@ -92,7 +93,8 @@ async def rag_with_typesense(user_input):
             break
 
         docs_length += len(doc_trimmed)
-        loaded_docs.append(loaded_doc)                
+        loaded_docs.append(loaded_doc) 
+        loaded_source_urls.append(search_hit.get('url', ''))               
 
 
     print(f'Starting RAG structured output chain, llm: {cfg.MODEL_TYPE}')
@@ -126,6 +128,7 @@ async def rag_with_typesense(user_input):
         'result': result['function'].helpful_answer,        
         'llm_rag_feedback': relevant_sources,
         'source_documents': loaded_docs,
+        'source_urls': loaded_source_urls,
         'search_queries': extract_search_queries.searchQueries,
         'durations': durations
     }

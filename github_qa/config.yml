@@ -1,6 +1,9 @@
-GH_Altinn/altinn-studio_ISSUES_SYNC_UPDATED_AT: 1699886756
-GH_Altinn/app-frontend-react_ISSUES_SYNC_UPDATED_AT: 1699893667
+GH_Altinn/altinn-studio_ISSUES_SYNC_UPDATED_AT: 1699987811
+GH_Altinn/app-frontend-react_ISSUES_SYNC_UPDATED_AT: 1699978857
 GH_REPO_LIST: Altinn/altinn-studio,Altinn/app-frontend-react
+MODEL_TYPE: 'gpt-4-1106-preview'
+MAX_CONTEXT_LENGTH: 9000
+MAX_SOURCE_LENGTH: 4000
 TYPESENSE_CONFIG:
   api_key: xyx
   connection_timeout_seconds': 200

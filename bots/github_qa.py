@@ -203,12 +203,12 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
                 "text": {"type": "mrkdwn", "text": f"{sourceSummary}"},                
             }),
         ]
-        # app.client.chat_postMessage(
-        #     thread_ts=thread_ts,
-        #     text=sourceSummary,
-        #     blocks=source_blocks,
-        #     channel=target_channel_id,
-        # )
+        app.client.chat_postMessage(
+            thread_ts=thread_ts,
+            text=sourceSummary,
+            blocks=source_blocks,
+            channel=target_channel_id,
+        )
 
     say(
         thread_ts=thread_ts,

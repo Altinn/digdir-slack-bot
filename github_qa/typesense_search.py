@@ -23,7 +23,7 @@ async def typesense_search_multiple(search_queries: GeneratedSearchQueries):
                     "collection":"gh-studio-issues",                
                     "q": query,
                     "query_by":"title,body",
-                    "include_fields":"title,body,id,is_pr",
+                    "include_fields":"title,body,id,url",
                     "limit": 20,
                     "prioritize_exact_match": False,
                     "sort_by": "_text_match:desc",
