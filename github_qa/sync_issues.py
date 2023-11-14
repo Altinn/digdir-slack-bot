@@ -75,6 +75,7 @@ def upload_issues_to_typesense(org_repo, max_issue_count=120):
                 if related_issue_start > -1:
                     body_trimmed = body_trimmed[:related_issue_start]
 
+
                 processed_issue = {
                     "id": str(issue["id"]),
                     "repository": issue["repository_url"].replace('https://api.github.com/repos/', ''),
@@ -129,7 +130,8 @@ def store_issues_updated_at_filter(org_repo, timestamp):
         yaml.dump(cfg.to_dict(), ymlfile)
 
 def main():
-    upload_issues_to_typesense('Altinn/altinn-studio', 10000)
+    # upload_issues_to_typesense('Altinn/altinn-studio', 10000)
+    upload_issues_to_typesense('Altinn/app-frontend-react', 10000)
 
 if __name__ == "__main__":
     main()
