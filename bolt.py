@@ -18,6 +18,7 @@ import utils.slack_utils as slack_utils
 from bots.choose_team import run_bot_async as bot_choose_team
 from bots.code_qa import run_bot_async as bot_code_qa
 from bots.docs_qa import run_bot_async as bot_docs_qa
+from bots.github_qa import run_bot_async as bot_github_qa
 from bots.structured_log import bot_log, BotLogEntry
 
 # Import config vars
@@ -35,6 +36,7 @@ app = App(
 bot_query_word_code = "[code] "
 bot_query_word_docs = "[docs] "
 bot_query_word_team = "[team] "
+bot_query_word_gh_issues = "[gh-issues] "
 
 pp = pprint.PrettyPrinter(indent=2)
 
@@ -77,11 +79,12 @@ def handle_message_events(ack, say, body, logger):
                 clean_text = text.replace(bot_query_word_code, "")
             elif text.startswith(bot_query_word_team):
                 bot_name = "team"
-                text.replace(bot_query_word_team, "")
+                clean_text = text.replace(bot_query_word_team, "")
+            elif text.startswith(bot_query_word_gh_issues):
+                bot_name = "gh-issues"
+                clean_text = text.replace(bot_query_word_gh_issues, "")            
             elif not text.startswith("["):
                 bot_name = "docs"
-
-            event_time_tz = slack_utils.unixtime_to_timestamptz(body.get('event_time'))            
                 
             entry = BotLogEntry(
                 slack_context= src_evt_context,
@@ -97,14 +100,14 @@ def handle_message_events(ack, say, body, logger):
                 asyncio.run(bot_code_qa(app, hitl_config, say, body, clean_text))
             elif bot_name == "team":
                 asyncio.run(bot_choose_team(app, hitl_config, say, body, clean_text))
+            elif bot_name == "gh-issues":
+                asyncio.run(bot_github_qa(app, hitl_config, say, body, clean_text))
             elif not text.startswith("["):
                 asyncio.run(bot_docs_qa(app, hitl_config, say, body, clean_text))
             else:
                 print(f"Unknown query type: '{text}'")
 
             
-
-
 @app.action("approve_button")
 def update_message(ack):
     ack()

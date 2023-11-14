@@ -10,7 +10,7 @@ from langchain.document_loaders import UnstructuredMarkdownLoader
 from docs_qa.chains import build_llm
 from docs_qa.extract_search_terms import run_query_async
 from .html_to_markdown import html_to_markdown
-from docs_qa.typesense import typesense_search_multiple
+from docs_qa.typesense_search import typesense_search_multiple
 
 
 pp = pprint.PrettyPrinter(indent=2)
