@@ -28,7 +28,9 @@ async def run_query_async(user_input) -> GeneratedSearchQueries:
         messages=[
             {"role": "system", 
              "content": f"""You have access to a search API that returns relevant documentation.
-Generate an array of up to 7 search queries that are relevant to this question.
+First, if the question is not in English, first translate to English.             
+Then, generate an array of up to 7 search queries that are relevant to this question.
+
 Use a variation of related keywords and synonyms for the queries, trying to be as general as possible.
 Include as many queries as you can think of, including and excluding terms.
 For example, include queries like ['keyword_1 keyword_2', 'keyword_1', 'keyword_2'].

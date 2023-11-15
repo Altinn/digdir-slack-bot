@@ -52,8 +52,8 @@ async def rag_with_typesense(user_input):
     search_response = await typesense_search_multiple(extract_search_queries)
     durations['execute_searches'] = timeit.default_timer() - start
 
-    # print(f'search response:')
-    # pp.pprint(search_response)
+    print(f'search response:')
+    pp.pprint(search_response)
 
     search_hits = [
         {
@@ -61,10 +61,17 @@ async def rag_with_typesense(user_input):
             'url': document['document'].get('url', ''),
             'title': document['document'].get('title'),
             'body': document['document'].get('body')[:1000],
+            'labels': document['document'].get('labels', []),
+            'state': document['document'].get('state', ''),
+            'vector_distance': document.get('vector_distance', 1.0),
         }
         for result in search_response['results']
+        if 'hits' in result
         for document in result['hits']
     ]    
+
+    if len(search_hits) == 0:
+        raise Exception("NoSearchResults")
 
     # print(f'All issues found:')
     # pp.pprint(search_hits)
@@ -83,13 +90,24 @@ async def rag_with_typesense(user_input):
 
         loaded_doc = {
             'title': search_hit.get('title', ''),
+            'labels': search_hit.get('labels', []),
+            'state': search_hit.get('state', ''),
+            'vector_distance': search_hit.get('vector_distance', 1.0),
             'page_content': doc_trimmed,
             'metadata': {            
                 'source': search_hit.get('url', ''),                                
             }
         }    
 
+        # skip hits that are clearly out of range
+        if search_hit.get('vector_distance', 1.0) > 0.9:
+            continue
+
         if (docs_length + len(doc_trimmed)) > cfg.MAX_CONTEXT_LENGTH:
+            break
+
+        # limit result set length
+        if len(loaded_docs) > 8:
             break
 
         docs_length += len(doc_trimmed)

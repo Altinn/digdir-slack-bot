@@ -93,7 +93,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         )
 
     try:
-        rag_response = await rag_with_typesense(text)        
+        rag_response = await rag_with_typesense(text)   
                 
         bot_log(BotLogEntry(
             slack_context= src_evt_context,
@@ -114,6 +114,15 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
             channel=target_channel_id,
         )
         return
+    except Exception as e:
+        print(f"Error: {e}")
+        app.client.chat_postMessage(
+            thread_ts=thread_ts,
+            text=f"Error: {e}",
+            channel=target_channel_id,
+        )
+        return
+
 
     answer = rag_response["result"]
 
@@ -182,26 +191,25 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         #     source = "https://docs.altinn.studio/" + source[slice_start:]
         #     source = source.rpartition("/")[0]
 
-        sourceSummary = f"Source #{i+1}: {source}"
+        sourceSummary = f"#{i+1}: {doc.get('title','')}"        
+        vector_distance = round(doc.get('vector_distance'), 3)
         source_blocks = [
-            ({
+            {
                 "type": "section",
-                "text": {"type": "mrkdwn", "text": f"{sourceSummary}"},
-                "accessory": {
-                    "type": "button",
-                    "text": {
-                        "type": "plain_text",
-                        "text": f"Send",
-                    },
-                    "value": f'{src_evt_context.team}|{src_evt_context.channel}|{src_evt_context.ts}',
-                    "action_id": "docs|qa|approve_reply",
-                },
-            }
-            if hitl_enabled
-            else {
+                "text": {"type": "mrkdwn", "text": f"<{source}|{sourceSummary}>"}
+            },
+            {
                 "type": "section",
-                "text": {"type": "mrkdwn", "text": f"{sourceSummary}"},                
-            }),
+                "text": {                    
+                    "type": "mrkdwn", "text": f"Status: {doc.get('state', '')}, labels: {doc.get('labels', 'None')}",
+                },                
+            },
+            {
+                "type": "section",
+                "text": {                    
+                    "type": "mrkdwn", "text": f"Vector Distance: {vector_distance}",
+                },                
+            },
         ]
         app.client.chat_postMessage(
             thread_ts=thread_ts,

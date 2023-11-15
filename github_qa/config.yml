@@ -1,12 +1,12 @@
-GH_Altinn/altinn-studio_ISSUES_SYNC_UPDATED_AT: 1699987811
-GH_Altinn/app-frontend-react_ISSUES_SYNC_UPDATED_AT: 1699978857
+GH_Altinn/altinn-studio_ISSUES_SYNC_UPDATED_AT: 1699427460
+GH_Altinn/app-frontend-react_ISSUES_SYNC_UPDATED_AT: 1698311415
 GH_REPO_LIST: Altinn/altinn-studio,Altinn/app-frontend-react
-MODEL_TYPE: 'gpt-4-1106-preview'
 MAX_CONTEXT_LENGTH: 9000
 MAX_SOURCE_LENGTH: 4000
+MODEL_TYPE: gpt-4-1106-preview
 TYPESENSE_CONFIG:
   api_key: xyx
-  connection_timeout_seconds': 200
+  connection_timeout_seconds: 200
   nodes:
   - host: altinn-typesense-api.azurewebsites.net
     port: '443'

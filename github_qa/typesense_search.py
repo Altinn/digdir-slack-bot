@@ -22,14 +22,14 @@ async def typesense_search_multiple(search_queries: GeneratedSearchQueries):
                 {
                     "collection":"gh-studio-issues",                
                     "q": query,
-                    "query_by":"title,body",
-                    "include_fields":"title,body,id,url",
-                    "limit": 20,
+                    "query_by":"title,body,body_embedding",
+                    "include_fields":"title,body,id,url,labels,state",
+                    "limit": 12,
                     "prioritize_exact_match": False,
-                    "sort_by": "_text_match:desc",
+                    # "sort_by": "_text_match:desc", # should default to vector_distance
                     "drop_tokens_threshold": 8,                
                     "pre_segmented_query": True,
-                    # "snippet_threshold":8,
+                    "exhaustive_search": True,                    
                     "highlight_affix_num_tokens":4
                 }
                 for query in search_queries.searchQueries

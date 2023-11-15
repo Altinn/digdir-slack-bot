@@ -19,7 +19,7 @@ def get_latest_issues(org_repo, page_count):
     updated_after = datetime.utcfromtimestamp(cfg[latest_key_name])
     url = f"https://api.github.com/repos/{org_repo}/issues"
     params = {
-        "state": "all",
+        "state": "open",
         "per_page": get_github_batch_size,
         "sort": "updated",
         "direction": "asc", 
@@ -130,8 +130,8 @@ def store_issues_updated_at_filter(org_repo, timestamp):
         yaml.dump(cfg.to_dict(), ymlfile)
 
 def main():
-    upload_issues_to_typesense('Altinn/altinn-studio', 10000)
-    upload_issues_to_typesense('Altinn/app-frontend-react', 10000)
+    upload_issues_to_typesense('Altinn/altinn-studio', 10)
+    upload_issues_to_typesense('Altinn/app-frontend-react', 10)
 
 if __name__ == "__main__":
     main()
