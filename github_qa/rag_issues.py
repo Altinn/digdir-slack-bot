@@ -9,17 +9,16 @@ from langchain.chains.openai_functions import (
     create_structured_output_chain
 )
 from docs_qa.chains import build_llm
-from docs_qa.prompts import qa_template
+from github_qa.prompts import qa_template
 from docs_qa.extract_search_terms import run_query_async
-from .html_to_markdown import html_to_markdown
-from docs_qa.typesense_search import typesense_search_multiple
+from github_qa.typesense_search import typesense_search_multiple
 from typing import Sequence
 
 
 pp = pprint.PrettyPrinter(indent=2)
 
 # Import config vars
-with open('docs_qa/config/config.yml', 'r', encoding='utf8') as ymlfile:
+with open('github_qa/config.yml', 'r', encoding='utf8') as ymlfile:
     cfg = box.Box(yaml.safe_load(ymlfile))
 
 
@@ -39,7 +38,6 @@ async def rag_with_typesense(user_input):
     durations = {
         'generate_searches': 0,
         'execute_searches': 0,
-        'download_docs': 0,
         'rag_query': 0,
         'total': 0
     }
@@ -60,62 +58,44 @@ async def rag_with_typesense(user_input):
     search_hits = [
         {
             'id': document['document']['id'],
-            'url': document['document']['url_without_anchor']
+            'url': document['document'].get('url', ''),
+            'title': document['document'].get('title'),
+            'body': document['document'].get('body')[:1000],
         }
         for result in search_response['results']
-        for hit in result['grouped_hits']
-        for document in hit['hits']
+        for document in result['hits']
     ]    
 
-    # print(f'All source document urls:')
+    # print(f'All issues found:')
     # pp.pprint(search_hits)
-
-    start = timeit.default_timer()
-    # download source HTML and convert to markdown - should be done by scraper    
-
-    loaded_docs = []
-    loaded_urls = []
-    loaded_search_hits = []
-    doc_index = 0
-    docs_length = 0
 
     # need to preserve order in documents list
     # should only append doc if context is not too big
+    loaded_docs = []
+    loaded_source_urls = []
+    doc_index = 0
+    docs_length = 0
 
     while doc_index < len(search_hits):        
         search_hit = search_hits[doc_index]
-        doc_index += 1
-        unique_url = search_hit['url']
-
-        if unique_url in loaded_urls:
-            continue
-
-        doc_md = await html_to_markdown(unique_url, "#body-inner")
-        doc_trimmed = doc_md[:cfg.MAX_SOURCE_LENGTH]
+        doc_index += 1      
+        doc_trimmed = search_hit.get('body','')[:cfg.MAX_SOURCE_LENGTH]  
 
         loaded_doc = {
+            'title': search_hit.get('title', ''),
             'page_content': doc_trimmed,
             'metadata': {            
-                'source': unique_url,                                
+                'source': search_hit.get('url', ''),                                
             }
         }    
-        print(f'loaded converted html to md doc, length= {len(doc_trimmed)}, url= {unique_url}')
-        # pp.pprint(loaded_doc)
 
         if (docs_length + len(doc_trimmed)) > cfg.MAX_CONTEXT_LENGTH:
             break
 
         docs_length += len(doc_trimmed)
-        loaded_docs.append(loaded_doc)
-        loaded_urls.append(unique_url)
-        loaded_search_hits.append(search_hit)                
+        loaded_docs.append(loaded_doc) 
+        loaded_source_urls.append(search_hit.get('url', ''))               
 
-
-        
-    durations['download_docs'] = timeit.default_timer() - start
-
-    print(f'stuffed source document urls:')
-    # pp.pprint(loaded_urls)
 
     print(f'Starting RAG structured output chain, llm: {cfg.MODEL_TYPE}')
     
@@ -148,7 +128,7 @@ async def rag_with_typesense(user_input):
         'result': result['function'].helpful_answer,        
         'llm_rag_feedback': relevant_sources,
         'source_documents': loaded_docs,
-        'source_urls': loaded_urls,
+        'source_urls': loaded_source_urls,
         'search_queries': extract_search_queries.searchQueries,
         'durations': durations
     }
