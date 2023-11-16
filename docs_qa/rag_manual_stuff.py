@@ -30,6 +30,7 @@ class RagContextRefs(BaseModel):
 class RagPromptReply(BaseModel):
     """Relevant context data"""
     helpful_answer: str = Field(..., description="The helpful answer")
+    i_dont_know: bool = Field(..., description="True when unable to answer based on the given context.")
     relevant_contexts: Sequence[RagContextRefs] = Field(..., description="List of context documents that were relevant when answering the question.")
 
 
@@ -60,7 +61,8 @@ async def rag_with_typesense(user_input):
     search_hits = [
         {
             'id': document['document']['id'],
-            'url': document['document']['url_without_anchor']
+            'url': document['document']['url_without_anchor'],
+            'lvl0': document['document']['hierarchy.lvl0'],
         }
         for result in search_response['results']
         for hit in result['grouped_hits']
@@ -136,20 +138,27 @@ async def rag_with_typesense(user_input):
 
     # print(f"Time to run RAG structured output chain: {chain_end - chain_start} seconds")
 
-    # print(f'runnable result:')
-    # pp.pprint(result)
+    print(f'runnable result:')
+    pp.pprint(result)
 
-    if 'relevant_contexts' in result['function']:
-        relevant_sources =  [context.source for context in result['function'].relevant_contexts]
+    if result['function'] is not None:
+        relevant_sources = [{
+            'url': context.source,
+            'title': next((hit['lvl0'] for hit in search_hits if hit['url'] == context.source), None),
+        }
+        for context in result['function'].relevant_contexts]
+        rag_success = result['function'].i_dont_know != True
     else:
         relevant_sources = []
+        # rag_success = None
 
     response = {
         'result': result['function'].helpful_answer,        
-        'llm_rag_feedback': relevant_sources,
-        'source_documents': loaded_docs,
-        'source_urls': loaded_urls,
+        'rag_success': rag_success,
         'search_queries': extract_search_queries.searchQueries,
+        'source_urls': loaded_urls,
+        'source_documents': loaded_docs,
+        'relevant_urls': relevant_sources,
         'durations': durations
     }
 
