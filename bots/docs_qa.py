@@ -153,11 +153,11 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     ]
     if len(relevant_sources) > 0:
         links_mrkdwn = "\n".join(f"<{source['url']}|{source['title']}>" for source in relevant_sources)        
-
         blocks.append({
             "type": "section",
             "text": {"type": "mrkdwn", "text": f"Relevant links:\n{links_mrkdwn}" }
         })
+        
     reply_text = (
         f"Suggested reply:\n{answer}"
         if hitl_enabled

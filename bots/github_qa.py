@@ -95,16 +95,21 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     try:
         rag_response = await rag_with_typesense(text)   
                 
+        payload = {"user_input": text, "bot_name": chain_name,
+                      'search_queries': rag_response['search_queries'],
+                      'answer': rag_response['result'],
+                      'source_urls': rag_response['source_urls'],
+                      'relevant_urls': rag_response['relevant_urls'],    
+                      }
+        if rag_response['rag_success'] is not None:
+            payload['rag_success'] = rag_response['rag_success']
+
         bot_log(BotLogEntry(
             slack_context= src_evt_context,
             elapsed_ms= slack_utils.time_s_to_ms(rag_response['durations']['total']),
             durations= rag_response['durations'],
             step_name= 'rag_with_typesense',
-            payload= {"user_input": text, "bot_name": chain_name,
-                      'search_queries': rag_response['search_queries'],
-                      'answer': rag_response['result'],
-                      },
-            rag_llm_feedback= rag_response['llm_rag_feedback']
+            payload= payload,
         ))
     except openai.error.ServiceUnavailableError as e:
         print(f"OpenAI API error: {e}")
@@ -125,6 +130,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
 
 
     answer = rag_response["result"]
+    relevant_sources = rag_response['relevant_urls']
 
     answer_block = ({
             "type": "section",
@@ -152,12 +158,15 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         },
         {"type": "section", "text": {"type": "mrkdwn", "text": "Results"}},
         {"type": "divider"},
-        answer_block,
-        {
-            "type": "section",
-            "text": {"type": "mrkdwn", "text": f"Relevant links:\n{rag_response['llm_rag_feedback']}" }
-        }
+        answer_block,        
     ]
+    if len(relevant_sources) > 0:
+        links_mrkdwn = "\n".join(f"<{source['url']}|{source['title']}>" for source in relevant_sources) 
+        blocks.append({
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f"Relevant links:\n{links_mrkdwn}" }
+        })   
+
     reply_text = (
         f"Suggested reply:\n{answer}"
         if hitl_enabled
@@ -179,7 +188,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     # Process source documents
     source_docs = rag_response["source_documents"]
     for i, doc in enumerate(source_docs):
-        print(f"doc {i}:\n{doc}")
+        # print(f"doc {i}:\n{doc}")
         source = doc["metadata"]["source"]
 
         # path_segment_index = source.index(known_path_segment)
