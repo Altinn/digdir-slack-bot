@@ -53,8 +53,8 @@ async def rag_with_typesense(user_input):
     search_response = await typesense_search_multiple(extract_search_queries)
     durations['execute_searches'] = timeit.default_timer() - start
 
-    print(f'search response:')
-    pp.pprint(search_response)
+    # print(f'search response:')
+    # pp.pprint(search_response)
 
     search_hits = [
         {
@@ -64,6 +64,7 @@ async def rag_with_typesense(user_input):
             'body': document['document'].get('body')[:1000],
             'labels': document['document'].get('labels', []),
             'state': document['document'].get('state', ''),
+            'closed_at': document['document'].get('closed_at'),
             'vector_distance': document.get('vector_distance', 1.0),
         }
         for result in search_response['results']
@@ -99,6 +100,9 @@ async def rag_with_typesense(user_input):
                 'source': search_hit.get('url', ''),                                
             }
         }    
+        closed_at = search_hit.get('closed_at')
+        if closed_at:
+            loaded_doc['closed_at'] = closed_at
 
         # skip hits that are clearly out of range
         if search_hit.get('vector_distance', 1.0) > 0.9:

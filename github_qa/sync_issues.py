@@ -19,7 +19,7 @@ def get_latest_issues(org_repo, page_count):
     updated_after = datetime.utcfromtimestamp(cfg[latest_key_name])
     url = f"https://api.github.com/repos/{org_repo}/issues"
     params = {
-        "state": "open",
+        "state": "all",
         "per_page": get_github_batch_size,
         "sort": "updated",
         "direction": "asc", 
