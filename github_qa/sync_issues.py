@@ -132,6 +132,8 @@ def store_issues_updated_at_filter(org_repo, timestamp):
 def main():
     upload_issues_to_typesense('Altinn/altinn-studio', 10)
     upload_issues_to_typesense('Altinn/app-frontend-react', 10)
+    upload_issues_to_typesense('Altinn/app-lib-dotnet', 200)
+    upload_issues_to_typesense('Altinn/app-template-dotnet', 200)
 
 if __name__ == "__main__":
     main()

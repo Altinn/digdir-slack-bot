@@ -1,6 +1,8 @@
-GH_Altinn/altinn-studio_ISSUES_SYNC_UPDATED_AT: 1699427460
-GH_Altinn/app-frontend-react_ISSUES_SYNC_UPDATED_AT: 1698311415
-GH_REPO_LIST: Altinn/altinn-studio,Altinn/app-frontend-react
+GH_Altinn/altinn-studio_ISSUES_SYNC_UPDATED_AT: 1700481991
+GH_Altinn/app-frontend-react_ISSUES_SYNC_UPDATED_AT: 1700481656
+GH_Altinn/app-lib-dotnet_ISSUES_SYNC_UPDATED_AT: 1687927184
+GH_Altinn/app-template-dotnet_ISSUES_SYNC_UPDATED_AT: 1700344433
+GH_REPO_LIST: Altinn/altinn-studio,Altinn/app-frontend-react,Altinn/app-lib-dotnet,Altinn/app-template-dotnet
 MAX_CONTEXT_LENGTH: 9000
 MAX_SOURCE_LENGTH: 4000
 MODEL_TYPE: gpt-4-1106-preview
