@@ -63,6 +63,7 @@ async def rag_with_typesense(user_input):
             'id': document['document']['id'],
             'url': document['document']['url_without_anchor'],
             'lvl0': document['document']['hierarchy.lvl0'],
+            'content_markdown': document['document']['content_markdown'],
         }
         for result in search_response['results']
         for hit in result['grouped_hits']
@@ -92,7 +93,8 @@ async def rag_with_typesense(user_input):
         if unique_url in loaded_urls:
             continue
 
-        doc_md = await html_to_markdown(unique_url, "#body-inner")
+        # doc_md = await html_to_markdown(unique_url, "#body-inner")
+        doc_md = search_hit['content_markdown']
         doc_trimmed = doc_md[:cfg.MAX_SOURCE_LENGTH]
 
         loaded_doc = {
