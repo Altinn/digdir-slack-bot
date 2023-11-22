@@ -20,7 +20,7 @@ async def typesense_search_multiple(search_queries: GeneratedSearchQueries):
         "searches":
             [
                 {
-                    "collection":"altinn-studio-docs-dev",                
+                    "collection":"altinn-studio-docs",                
                     "q": query,
                     "query_by":"hierarchy.lvl0,hierarchy.lvl1,hierarchy.lvl2,hierarchy.lvl3,hierarchy.lvl4,hierarchy.lvl5,hierarchy.lvl6,content,embedding",
                     "include_fields":"hierarchy.lvl0,hierarchy.lvl1,hierarchy.lvl2,hierarchy.lvl3,hierarchy.lvl4,url_without_anchor,type,id,content_markdown",
