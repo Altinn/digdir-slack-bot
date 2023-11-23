@@ -100,6 +100,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
                       'answer': rag_response['result'],
                       'source_urls': rag_response['source_urls'],
                       'relevant_urls': rag_response['relevant_urls'],                      
+                      'not_loaded_urls': rag_response.get('not_loaded_urls', [])
                       }
         if rag_response['rag_success'] is not None:
             payload['rag_success'] = rag_response['rag_success']

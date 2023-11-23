@@ -11,7 +11,6 @@ from langchain.chains.openai_functions import (
 from docs_qa.chains import build_llm
 from docs_qa.prompts import qa_template
 from docs_qa.extract_search_terms import run_query_async
-from .html_to_markdown import html_to_markdown
 from docs_qa.typesense_search import typesense_search_multiple
 from typing import Sequence
 
@@ -85,6 +84,7 @@ async def rag_with_typesense(user_input):
     # need to preserve order in documents list
     # should only append doc if context is not too big
 
+
     while doc_index < len(search_hits):        
         search_hit = search_hits[doc_index]
         doc_index += 1
@@ -112,10 +112,12 @@ async def rag_with_typesense(user_input):
         docs_length += len(doc_trimmed)
         loaded_docs.append(loaded_doc)
         loaded_urls.append(unique_url)
-        loaded_search_hits.append(search_hit)                
+        loaded_search_hits.append(search_hit)        
 
+    not_loaded_urls = [hit['url'] for hit in search_hits]
+    not_loaded_urls = [url for url in not_loaded_urls if url not in loaded_urls]
+    not_loaded_urls = list(set(not_loaded_urls))
 
-        
     durations['download_docs'] = timeit.default_timer() - start
 
     print(f'stuffed source document urls:')
@@ -161,7 +163,8 @@ async def rag_with_typesense(user_input):
         'source_urls': loaded_urls,
         'source_documents': loaded_docs,
         'relevant_urls': relevant_sources,
-        'durations': durations
+        'not_loaded_urls': not_loaded_urls,
+        'durations': durations,
     }
 
     # pp.pprint(response)
