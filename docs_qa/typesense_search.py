@@ -2,7 +2,7 @@ import box
 import yaml
 import pprint
 import typesense
-from sentence_transformers import SentenceTransformer
+# from sentence_transformers import SentenceTransformer
 from docs_qa.extract_search_terms import GeneratedSearchQueries
 
 pp = pprint.PrettyPrinter(indent=2)
@@ -43,33 +43,33 @@ async def typesense_search_multiple(search_queries: GeneratedSearchQueries):
     response = client.multi_search.perform(multi_search_args, {})
     return response
 
-async def typesense_search_multiple_vector(search_queries: GeneratedSearchQueries):
-    client = typesense.Client(cfg.TYPESENSE_CONFIG)
+# async def typesense_search_multiple_vector(search_queries: GeneratedSearchQueries):
+#     client = typesense.Client(cfg.TYPESENSE_CONFIG)
 
-    print(f'incoming queries, converting to vectors:\n{search_queries}')
+#     print(f'incoming queries, converting to vectors:\n{search_queries}')
 
-    # Convert search queries to vectors using all-MiniLM-L12-v2
-    model = SentenceTransformer("sentence-transformers/all-MiniLM-L12-v2")
+#     # Convert search queries to vectors using all-MiniLM-L12-v2
+#     model = SentenceTransformer("sentence-transformers/all-MiniLM-L12-v2")
 
-    vector_queries = [model.encode(query) for query in search_queries.searchQueries]
+#     vector_queries = [model.encode(query) for query in search_queries.searchQueries]
     
-    multi_search_args = {
-        "searches":
-            [
-                {
-                    "collection":"altinn-studio-docs",                
-                    "q": "*",
-                    "vector_query": f"embedding:([{','.join(str(v) for v in query)}], k:10)",
-                    "include_fields":"hierarchy.lvl0,hierarchy.lvl1,hierarchy.lvl2,hierarchy.lvl3,hierarchy.lvl4,url_without_anchor,type,id,content_markdown",
-                }
-                for query in vector_queries
-            ]
-        }
-    print(f'multi_search_args:')
-    pprint.pprint(multi_search_args)
+#     multi_search_args = {
+#         "searches":
+#             [
+#                 {
+#                     "collection":"altinn-studio-docs",                
+#                     "q": "*",
+#                     "vector_query": f"embedding:([{','.join(str(v) for v in query)}], k:10)",
+#                     "include_fields":"hierarchy.lvl0,hierarchy.lvl1,hierarchy.lvl2,hierarchy.lvl3,hierarchy.lvl4,url_without_anchor,type,id,content_markdown",
+#                 }
+#                 for query in vector_queries
+#             ]
+#         }
+#     print(f'multi_search_args:')
+#     pprint.pprint(multi_search_args)
 
-    response = client.multi_search.perform(multi_search_args, {})
-    return response
+#     response = client.multi_search.perform(multi_search_args, {})
+#     return response
 
 
 async def typesense_retrieve_all_by_url(url_list):
