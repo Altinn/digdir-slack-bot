@@ -17,3 +17,8 @@ Question: {question}
 Only return the helpful answer below, along with relevant source code examples when possible.
 Helpful answer:
 """
+
+generate_search_phrases_template = """Please analyze the contents of the following documentation article and generate a list of English phrases that you would expect to match this document:
+
+{document}
+"""

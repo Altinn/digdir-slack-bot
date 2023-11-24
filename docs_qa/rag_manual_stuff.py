@@ -73,7 +73,6 @@ async def rag_with_typesense(user_input):
     # pp.pprint(search_hits)
 
     start = timeit.default_timer()
-    # download source HTML and convert to markdown - should be done by scraper    
 
     loaded_docs = []
     loaded_urls = []

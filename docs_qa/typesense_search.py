@@ -71,6 +71,32 @@ async def typesense_search_multiple_vector(search_queries: GeneratedSearchQuerie
     response = client.multi_search.perform(multi_search_args, {})
     return response
 
+async def typesense_retrieve_all_urls(page, page_size):
+    client = typesense.Client(cfg.TYPESENSE_CONFIG)
+
+    multi_search_args = {
+        "searches":
+            [
+                {
+                    "collection":"altinn-studio-docs",                
+                    "q": "#body-inner",
+                    "query_by":"url",
+                    "include_fields":"url_without_anchor,content_markdown,id",
+                    "group_by":"url_without_anchor",
+                    "group_limit":1,
+                    "sort_by": "item_priority:desc",
+                    "page": page,
+                    "per_page": page_size,
+                }
+            ]
+        }
+    
+    print(f'multi_search_args:')
+    pprint.pprint(multi_search_args)
+
+    response = client.multi_search.perform(multi_search_args, {})
+    return response
+
 
 async def typesense_retrieve_all_by_url(url_list):
     client = typesense.Client(cfg.TYPESENSE_CONFIG)
