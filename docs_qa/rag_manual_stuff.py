@@ -11,7 +11,7 @@ from langchain.chains.openai_functions import (
 from docs_qa.chains import build_llm
 from docs_qa.prompts import qa_template
 from docs_qa.extract_search_terms import run_query_async
-from docs_qa.typesense_search import typesense_search_multiple
+import docs_qa.typesense_search as search
 from typing import Sequence
 
 
@@ -38,8 +38,8 @@ async def rag_with_typesense(user_input):
 
     durations = {
         'generate_searches': 0,
-        'execute_searches': 0,
-        'download_docs': 0,
+        'phrase_similarity_search': 0,
+        'retrieve_docs': 0,
         'rag_query': 0,
         'total': 0
     }
@@ -50,12 +50,31 @@ async def rag_with_typesense(user_input):
     # print(f'generated queries:')
     # pp.pprint(extract_search_queries)
 
-    start = timeit.default_timer()
-    search_response = await typesense_search_multiple(extract_search_queries)
-    durations['execute_searches'] = timeit.default_timer() - start
+    # start = timeit.default_timer()
+    # search_response = await search.typesense_search_multiple(extract_search_queries)
+    # durations['execute_searches'] = timeit.default_timer() - start
 
-    # print(f'search response:')
-    # pp.pprint(search_response)
+    
+    start = timeit.default_timer()
+    search_response = await search.lookup_search_phrases_similar(extract_search_queries)
+    durations['phrase_similarity_search'] = timeit.default_timer() - start
+
+    print(f'search response:')
+    pp.pprint(search_response)
+
+
+    search_phrase_hits = [
+        phrase['document'].get('url','')
+        for result in search_response['results']
+        for hit in result['grouped_hits']
+        for phrase in hit['hits']
+    ][:20]   
+    # print(f'url list:')
+    # pp.pprint(search_phrase_hits)
+
+    start = timeit.default_timer()
+    search_response = await search.typesense_retrieve_all_by_url(search_phrase_hits)
+    durations['execute_searches'] = timeit.default_timer() - start
 
     search_hits = [
         {

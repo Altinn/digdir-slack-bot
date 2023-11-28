@@ -2,6 +2,7 @@ import box
 import timeit
 import yaml
 import pprint
+import typesense
 
 from langchain.pydantic_v1 import BaseModel, Field
 from langchain.prompts import ChatPromptTemplate
@@ -10,7 +11,7 @@ from langchain.chains.openai_functions import (
 )
 from docs_qa.chains import build_llm
 from docs_qa.prompts import generate_search_phrases_template
-from docs_qa.typesense_search import typesense_retrieve_all_urls
+import docs_qa.typesense_search as search
 from typing import Sequence
 
 
@@ -30,8 +31,12 @@ class RagPromptReply(BaseModel):
     search_phrases: Sequence[RagContextRefs] = Field(..., description="List of generated search phrases.")
 
 
-
 async def run():
+
+    client = typesense.Client(cfg.TYPESENSE_CONFIG)
+    collection_name = 'altinn-studio-docs-search-phrases'
+
+    search.setup_search_phrase_schema(collection_name)
 
     durations = {
         'query_docs': 0,
@@ -40,7 +45,7 @@ async def run():
         'total': 0
     }
     page = 1
-    page_size = 3
+    page_size = 10
 
     # Convert search phrases to vectors using all-MiniLM-L12-v2
     # model = SentenceTransformer("sentence-transformers/all-MiniLM-L12-v2")
@@ -48,11 +53,14 @@ async def run():
     total_start = start = timeit.default_timer()
 
     while True:
-        search_response = await typesense_retrieve_all_urls(page, page_size)
+
+        print(f'Retrieving content_markdown for all urls, page {page} (page_size={page_size})')
+
+        search_response = await search.typesense_retrieve_all_urls(page, page_size)
         durations['query_docs'] += timeit.default_timer() - start
 
-        print(f'typesense_retrieve_all_urls response:')
-        pp.pprint(search_response)
+        # print(f'typesense_retrieve_all_urls response:')
+        # pp.pprint(search_response)
 
         search_hits = [
             {
@@ -65,10 +73,12 @@ async def run():
             for document in hit['hits']
         ]    
 
-        print(f'Retrieved docs by url_without_anchor, page {page} (page_size={page_size})')
-        pp.pprint(search_hits)
+        print(f'Retrieved {len(search_hits)} urls.')
+        # print(f'Retrieved docs by url_without_anchor, page {page} (page_size={page_size})')
+        # pp.pprint(search_hits)
 
         if len(search_hits) == 0:
+            print(f'Last page with results was page {page - 1}')
             break
 
         start = timeit.default_timer()
@@ -80,9 +90,18 @@ async def run():
 
         while doc_index < len(search_hits):        
             search_hit = search_hits[doc_index]
+            url = search_hit.get("url", "")
             doc_index += 1
+            lookup_results = await search.lookup_search_phrases(url)
+            existing_phrases = lookup_results["results"][0]
 
-            print(f'Starting generate search phrases chain, llm: {cfg.MODEL_TYPE}')
+            # pp.pprint(existing_phrases)
+
+            if existing_phrases.get('found', 0) > 0:
+                print(f'Found existing phrases, skipping for url: {url}')                
+                continue
+
+            print(f'Generating search phrases for url: {url}')
             
             start = timeit.default_timer()
             llm = build_llm()
@@ -98,8 +117,8 @@ async def run():
             durations['generate_phrases'] += timeit.default_timer() - start
             durations['total'] += timeit.default_timer() - total_start
 
-            print(f'runnable result:')
-            pp.pprint(result)
+            # print(f'runnable result:')
+            # pp.pprint(result)
 
             if result['function'] is not None:
                 search_phrases = [{
@@ -109,9 +128,26 @@ async def run():
             else:
                 search_phrases = []
 
-            print(f'Generated search phrases for: {search_hit["url"]}\n')
-            for phrase in search_phrases:
+            print(f'Generated search phrases for: {url}\n')
+
+            upload_batch = []
+            
+            
+            for index, phrase in enumerate(search_phrases):
                 print(phrase)
+                batch = {
+                    'doc_id': search_hit.get('id',''),
+                    'url': url,
+                    'search_phrase': phrase.get('search_phrase', ''),
+                    'sort_order': index,
+                    'item_priority': 1,
+                }
+                upload_batch.append(batch)
+
+            results = client.collections[collection_name].documents.import_(upload_batch, {'action': 'upsert', 'return_id': True})
+            failed_results = [result for result in results if not result['success']]
+            if len(failed_results) > 0:
+                print(f'The following search_phrases were not successfully upserted to typesense:\n{failed_results}')
             
         page += 1
 
