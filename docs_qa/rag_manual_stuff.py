@@ -39,7 +39,6 @@ async def rag_with_typesense(user_input):
     durations = {
         'generate_searches': 0,
         'phrase_similarity_search': 0,
-        'retrieve_docs': 0,
         'rag_query': 0,
         'total': 0
     }
@@ -56,21 +55,11 @@ async def rag_with_typesense(user_input):
 
     
     start = timeit.default_timer()
-    search_response = await search.lookup_search_phrases_similar(extract_search_queries)
+    search_phrase_hits = await search.lookup_search_phrases_similar(extract_search_queries)
     durations['phrase_similarity_search'] = timeit.default_timer() - start
 
-    print(f'search response:')
-    pp.pprint(search_response)
-
-
-    search_phrase_hits = [
-        phrase['document'].get('url','')
-        for result in search_response['results']
-        for hit in result['grouped_hits']
-        for phrase in hit['hits']
-    ][:20]   
-    # print(f'url list:')
-    # pp.pprint(search_phrase_hits)
+    print(f'url list:')
+    pp.pprint(search_phrase_hits)
 
     start = timeit.default_timer()
     search_response = await search.typesense_retrieve_all_by_url(search_phrase_hits)
@@ -160,8 +149,8 @@ async def rag_with_typesense(user_input):
 
     # print(f"Time to run RAG structured output chain: {chain_end - chain_start} seconds")
 
-    print(f'runnable result:')
-    pp.pprint(result)
+    # print(f'runnable result:')
+    # pp.pprint(result)
 
     if result['function'] is not None:
         relevant_sources = [{

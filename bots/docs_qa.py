@@ -188,7 +188,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     # Process source documents
     source_docs = rag_response["source_documents"]
     for i, doc in enumerate(source_docs):
-        print(f"doc {i}:\n{doc}")
+        # print(f"doc {i}:\n{doc}")
         source = doc["metadata"]["source"]
         path_segment_index = source.index(known_path_segment)
         if path_segment_index >= 0:

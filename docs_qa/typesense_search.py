@@ -49,13 +49,13 @@ async def lookup_search_phrases_similar(search_queries: GeneratedSearchQueries):
             [
                 {
                     "collection":"altinn-studio-docs-search-phrases",      
-                     "q": query,
+                    "q": query,
                     "query_by": "search_phrase,phrase_vec",
                     "include_fields": "url",
-                    "group_by":"url",
-                    "group_limit":5,
-                    "limit": 30,
-                    "sort_by": "_text_match:desc",
+                    "group_by": "url",
+                    "group_limit": 1,
+                    "limit": 20,
+                    "sort_by": "_text_match:desc,_vector_distance:asc",
                     "prioritize_exact_match": True,
                     "drop_tokens_threshold": 5,                                    
                 }
@@ -65,7 +65,38 @@ async def lookup_search_phrases_similar(search_queries: GeneratedSearchQueries):
     # print(f'multi_search_args:')
     # pprint.pprint(multi_search_args)
     response = client.multi_search.perform(multi_search_args, {})
-    return response
+
+    print(f'lookup_search_phrases_similar raw response:')
+    pp.pprint(response)
+
+
+    search_phrase_hits = [
+        phrase
+        for result in response['results']
+        for hit in result['grouped_hits']
+        for phrase in hit['hits']
+        # for phrase in result['hits']
+    ]
+    search_phrase_hits.sort(key=lambda x: x['hybrid_search_info']['rank_fusion_score'], reverse=True)
+
+    url_list = [
+        {
+            'url': phrase['document']['url'],
+            'rank': phrase['hybrid_search_info']['rank_fusion_score'],
+        }
+        for phrase in search_phrase_hits
+    ]
+    unique_urls = []
+    for url in url_list:
+        if url['url'] not in [u['url'] for u in unique_urls]:
+            unique_urls.append(url)
+
+
+    # for url in url_list:
+    #     if url not in [u['url'] for u in unique_urls]:
+    #         unique_urls.append(url)
+    
+    return unique_urls
 
 async def typesense_search_multiple_vector(search_queries: GeneratedSearchQueries):
     client = typesense.Client(cfg.TYPESENSE_CONFIG)
@@ -128,15 +159,16 @@ async def typesense_retrieve_all_by_url(url_list):
     url_searchs = [
         {
             "collection":"altinn-studio-docs",                
-            "q": url,
+            "q": ranked_url['url'],
             "query_by":"url_without_anchor",
             "include_fields":"hierarchy.lvl0,hierarchy.lvl1,hierarchy.lvl2,hierarchy.lvl3,hierarchy.lvl4,url_without_anchor,type,id,content_markdown",
+            "filter_by": f"url_without_anchor:={ranked_url['url']}",
             "group_by":"url_without_anchor",
             "group_limit": 1,
             "page": 1,
             "per_page": 1
         } 
-        for url in url_list
+        for ranked_url in url_list[:20]
     ]
     # pp.pprint(url_searchs)
 
