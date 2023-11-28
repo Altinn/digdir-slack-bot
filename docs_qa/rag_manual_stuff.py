@@ -103,6 +103,11 @@ async def rag_with_typesense(user_input):
         # doc_md = await html_to_markdown(unique_url, "#body-inner")
         doc_md = search_hit['content_markdown']
         doc_trimmed = doc_md[:cfg.MAX_SOURCE_LENGTH]
+        if (docs_length + len(doc_trimmed)) > cfg.MAX_CONTEXT_LENGTH:
+            doc_trimmed = doc_trimmed[:cfg.MAX_CONTEXT_LENGTH - docs_length - 20]
+
+        if len(doc_trimmed) == 0:
+            break
 
         loaded_doc = {
             'page_content': doc_trimmed,
@@ -113,13 +118,14 @@ async def rag_with_typesense(user_input):
         print(f'loaded converted html to md doc, length= {len(doc_trimmed)}, url= {unique_url}')
         # pp.pprint(loaded_doc)
 
-        if (docs_length + len(doc_trimmed)) > cfg.MAX_CONTEXT_LENGTH:
-            break
-
         docs_length += len(doc_trimmed)
         loaded_docs.append(loaded_doc)
         loaded_urls.append(unique_url)
         loaded_search_hits.append(search_hit)        
+
+        if docs_length >= cfg.MAX_CONTEXT_LENGTH:
+            print(f'MAX_CONTEXT_LENGTH: {cfg.MAX_CONTEXT_LENGTH} exceeded, loaded {len(loaded_docs)} docs.')
+            break
 
     not_loaded_urls = [hit['url'] for hit in search_hits]
     not_loaded_urls = [url for url in not_loaded_urls if url not in loaded_urls]

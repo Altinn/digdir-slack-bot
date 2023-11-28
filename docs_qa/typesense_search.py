@@ -56,7 +56,7 @@ async def lookup_search_phrases_similar(search_queries: GeneratedSearchQueries):
                     "group_limit": 1,
                     "limit": 20,
                     "sort_by": "_text_match:desc,_vector_distance:asc",
-                    "prioritize_exact_match": True,
+                    "prioritize_exact_match": False,
                     "drop_tokens_threshold": 5,                                    
                 }
                 for query in search_queries.searchQueries
