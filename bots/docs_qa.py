@@ -185,50 +185,83 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     known_path_segment = "https://docs.altinn.studio"
 
 
-
-    # Process source documents
     source_docs = rag_response["source_documents"]
+    table_blocks = []
+    fields_list = "*Source list*\n"
+
+    # Data rows
     for i, doc in enumerate(source_docs):
-        # print(f"doc {i}:\n{doc}")
         source = doc["metadata"]["source"]
         path_segment_index = source.index(known_path_segment)
         if path_segment_index >= 0:
             slice_start = (
                 (-1 * len(source)) + path_segment_index + len(known_path_segment) + 1
             )
-            # print(f'slice_start: {slice_start}')
             source = "https://docs.altinn.studio/" + source[slice_start:]
             source = source.rpartition("/")[0]
+            source_text = source.replace("https://docs.altinn.studio/", "")
 
-        page_content = doc["page_content"].replace("\n", "\n>")
+        fields_list += f"#{i+1}: <{source}|{source_text}>\n"
 
-        sourceSummary = f"Source #{i+1}: {source}"
-        source_blocks = [
-            ({
-                "type": "section",
-                "text": {"type": "mrkdwn", "text": f"{sourceSummary}"},
-                "accessory": {
-                    "type": "button",
-                    "text": {
-                        "type": "plain_text",
-                        "text": f"Send",
-                    },
-                    "value": f'{src_evt_context.team}|{src_evt_context.channel}|{src_evt_context.ts}',
-                    "action_id": "docs|qa|approve_reply",
-                },
-            }
-            if hitl_enabled
-            else {
-                "type": "section",
-                "text": {"type": "mrkdwn", "text": f"{sourceSummary}"},                
-            }),
-        ]
-        app.client.chat_postMessage(
-            thread_ts=thread_ts,
-            text=sourceSummary,
-            blocks=source_blocks,
-            channel=target_channel_id,
-        )
+    table_blocks.append({
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": fields_list,
+            },                
+        })
+
+    # Send the message
+    app.client.chat_postMessage(
+        thread_ts=thread_ts,
+        text="Source Documents",
+        blocks=table_blocks,
+        channel=target_channel_id,
+    )
+
+    # # Process source documents
+    # source_docs = rag_response["source_documents"]
+    # for i, doc in enumerate(source_docs):
+    #     # print(f"doc {i}:\n{doc}")
+    #     source = doc["metadata"]["source"]
+    #     path_segment_index = source.index(known_path_segment)
+    #     if path_segment_index >= 0:
+    #         slice_start = (
+    #             (-1 * len(source)) + path_segment_index + len(known_path_segment) + 1
+    #         )
+    #         # print(f'slice_start: {slice_start}')
+    #         source = "https://docs.altinn.studio/" + source[slice_start:]
+    #         source = source.rpartition("/")[0]
+
+    #     page_content = doc["page_content"].replace("\n", "\n>")
+
+    #     sourceSummary = f"Source #{i+1}: {source}"
+    #     source_blocks = [
+    #         ({
+    #             "type": "section",
+    #             "text": {"type": "mrkdwn", "text": f"{sourceSummary}"},
+    #             "accessory": {
+    #                 "type": "button",
+    #                 "text": {
+    #                     "type": "plain_text",
+    #                     "text": f"Send",
+    #                 },
+    #                 "value": f'{src_evt_context.team}|{src_evt_context.channel}|{src_evt_context.ts}',
+    #                 "action_id": "docs|qa|approve_reply",
+    #             },
+    #         }
+    #         if hitl_enabled
+    #         else {
+    #             "type": "section",
+    #             "text": {"type": "mrkdwn", "text": f"{sourceSummary}"},                
+    #         }),
+    #     ]
+    #     app.client.chat_postMessage(
+    #         thread_ts=thread_ts,
+    #         text=sourceSummary,
+    #         blocks=source_blocks,
+    #         channel=target_channel_id,
+    #     )
 
     say(
         thread_ts=thread_ts,
