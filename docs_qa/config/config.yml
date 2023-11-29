@@ -8,7 +8,7 @@ DB_FAISS_PATH: 'docs_qa/vectorstore/db_faiss'
 # MODEL_BIN_PATH: 'models/mpt-7b-instruct.ggmlv3.q8_0.bin'
 MODEL_TYPE: 'gpt-4-1106-preview'
 MODEL_BIN_PATH: ''
-MAX_NEW_TOKENS: 512
+MAX_NEW_TOKENS: 1000
 TEMPERATURE: 1.0
 MAX_CONTEXT_LENGTH: 40000
 MAX_SOURCE_LENGTH: 4000
