@@ -66,8 +66,8 @@ async def lookup_search_phrases_similar(search_queries: GeneratedSearchQueries):
     # pprint.pprint(multi_search_args)
     response = client.multi_search.perform(multi_search_args, {})
 
-    print(f'lookup_search_phrases_similar raw response:')
-    pp.pprint(response)
+    # print(f'lookup_search_phrases_similar raw response:')
+    # pp.pprint(response)
 
 
     search_phrase_hits = [
@@ -120,8 +120,8 @@ async def typesense_search_multiple_vector(search_queries: GeneratedSearchQuerie
                 for query in vector_queries
             ]
         }
-    print(f'multi_search_args:')
-    pprint.pprint(multi_search_args)
+    # print(f'multi_search_args:')
+    # pprint.pprint(multi_search_args)
 
     response = client.multi_search.perform(multi_search_args, {})
     return response
@@ -146,8 +146,8 @@ async def typesense_retrieve_all_urls(page, page_size):
             ]
         }
     
-    print(f'multi_search_args:')
-    pprint.pprint(multi_search_args)
+    # print(f'multi_search_args:')
+    # pprint.pprint(multi_search_args)
 
     response = client.multi_search.perform(multi_search_args, {})
     return response
