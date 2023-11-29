@@ -96,6 +96,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         rag_response = await rag_with_typesense(text)        
                 
         payload = {"user_input": text, "bot_name": 'docs',
+                   'input_language': rag_response['input_language'],
                       'search_queries': rag_response['search_queries'],
                       'answer': rag_response['result'],
                       'source_urls': rag_response['source_urls'],

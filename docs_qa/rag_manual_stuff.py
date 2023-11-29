@@ -46,6 +46,8 @@ async def rag_with_typesense(user_input):
     extract_search_queries = await run_query_async(user_input)
     durations['generate_searches'] = timeit.default_timer() - start
 
+    print(f'Query language code: {extract_search_queries.userInputLanguage}')
+
     # print(f'generated queries:')
     # pp.pprint(extract_search_queries)
 
@@ -171,6 +173,7 @@ async def rag_with_typesense(user_input):
 
     response = {
         'result': result['function'].helpful_answer,        
+        'input_language': extract_search_queries.userInputLanguage,
         'rag_success': rag_success,
         'search_queries': extract_search_queries.searchQueries,
         'source_urls': loaded_urls,

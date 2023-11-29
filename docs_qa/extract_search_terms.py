@@ -16,7 +16,8 @@ instructor.patch()
 openai.api_key = os.environ['OPENAI_API_KEY_ALTINN3_DEV']
 
 class GeneratedSearchQueries(BaseModel):
-    searchQueries: list[str] = Field(description="Array of search queries.")
+    searchQueries: list[str] = Field(..., description="Array of search queries.")
+    userInputLanguage: str = Field(..., description="ISO 639-1 language code for the original question")
 
 pp = pprint.PrettyPrinter(indent=2)
 
