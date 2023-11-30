@@ -130,10 +130,10 @@ def store_issues_updated_at_filter(org_repo, timestamp):
         yaml.dump(cfg.to_dict(), ymlfile)
 
 def main():
-    upload_issues_to_typesense('Altinn/altinn-studio', 10)
-    upload_issues_to_typesense('Altinn/app-frontend-react', 10)
-    upload_issues_to_typesense('Altinn/app-lib-dotnet', 200)
-    upload_issues_to_typesense('Altinn/app-template-dotnet', 200)
+    upload_issues_to_typesense('Altinn/altinn-studio', 80)
+    upload_issues_to_typesense('Altinn/app-frontend-react', 80)
+    upload_issues_to_typesense('Altinn/app-lib-dotnet', 80)
+    upload_issues_to_typesense('Altinn/app-template-dotnet', 80)
 
 if __name__ == "__main__":
     main()
