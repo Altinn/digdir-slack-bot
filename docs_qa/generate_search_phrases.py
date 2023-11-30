@@ -3,6 +3,7 @@ import timeit
 import yaml
 import pprint
 import typesense
+import datetime
 
 from langchain.pydantic_v1 import BaseModel, Field
 from langchain.prompts import ChatPromptTemplate
@@ -31,12 +32,14 @@ class RagPromptReply(BaseModel):
     search_phrases: Sequence[RagContextRefs] = Field(..., description="List of generated search phrases.")
 
 
-async def run():
+async def run(collection_name_tmp):
 
     client = typesense.Client(cfg.TYPESENSE_CONFIG)
-    collection_name = 'altinn-studio-docs-search-phrases'
 
-    search.setup_search_phrase_schema(collection_name)
+    if collection_name_tmp == None or len(collection_name_tmp) == 0:
+        collection_name_tmp = f'{cfg.SEARCH_PHRASE_COLLECTION}_{int(datetime.datetime.now().timestamp())}'
+
+    search.setup_search_phrase_schema(collection_name_tmp)
 
     durations = {
         'query_docs': 0,
@@ -92,7 +95,7 @@ async def run():
             search_hit = search_hits[doc_index]
             url = search_hit.get("url", "")
             doc_index += 1
-            lookup_results = await search.lookup_search_phrases(url)
+            lookup_results = await search.lookup_search_phrases(url, collection_name_tmp)
             existing_phrases = lookup_results["results"][0]
 
             # pp.pprint(existing_phrases)
@@ -144,11 +147,29 @@ async def run():
                 }
                 upload_batch.append(batch)
 
-            results = client.collections[collection_name].documents.import_(upload_batch, {'action': 'upsert', 'return_id': True})
+            results = client.collections[collection_name_tmp].documents.import_(upload_batch, {'action': 'upsert', 'return_id': True})
             failed_results = [result for result in results if not result['success']]
             if len(failed_results) > 0:
                 print(f'The following search_phrases were not successfully upserted to typesense:\n{failed_results}')
             
         page += 1
 
+    
+
     return None
+
+
+def commit_tmp_collection(client: typesense.Client, collection_name_tmp: str):
+        """Update alias to point to new collection"""
+        old_collection_name = None
+        alias_name = cfg.SEARCH_PHRASE_COLLECTION
+
+        try:
+            old_collection_name = client.aliases[alias_name].retrieve()['collection_name']
+        except exceptions.ObjectNotFound:
+            pass
+
+        client.aliases.upsert(alias_name, {'collection_name': collection_name_tmp})
+
+        # if old_collection_name:
+        #     client.collections[old_collection_name].delete()

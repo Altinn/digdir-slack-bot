@@ -149,8 +149,8 @@ async def typesense_retrieve_all_urls(page, page_size):
     # print(f'multi_search_args:')
     # pprint.pprint(multi_search_args)
 
-#     response = client.multi_search.perform(multi_search_args, {})
-#     return response
+    response = client.multi_search.perform(multi_search_args, {})
+    return response
 
 
 async def typesense_retrieve_all_by_url(url_list):
@@ -203,16 +203,18 @@ def setup_search_phrase_schema(collection_name_tmp):
     except typesense.exceptions.ObjectNotFound:
         client.collections.create(schema)
     
-async def lookup_search_phrases(url):
+async def lookup_search_phrases(url, collection_name: str):
     """Get existing search phrases for url"""
 
     client = typesense.Client(cfg.TYPESENSE_CONFIG)
+    if collection_name == None:
+        collection_name = cfg.SEARCH_PHRASE_COLLECTION
 
     multi_search_args = {
         "searches":
             [
                 {
-                    "collection": cfg.SEARCH_PHRASE_COLLECTION,                
+                    "collection": collection_name,
                     "q": "*",
                     "query_by":"url",
                     "include_fields": "id,url,search_phrase,sort_order",

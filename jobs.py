@@ -9,10 +9,14 @@ if __name__ == "__main__":
                         type=str,
                         default='',
                         help='Specify a job name - "generate_search_phrases", "sync_github_issues"')
+    parser.add_argument('param1',
+                        type=str,
+                        default='',
+                        help='Specify a parameter')
     args = parser.parse_args()
 
     if args.job == 'generate_search_phrases':
-        asyncio.run(generate_search_phrases.run())
+        asyncio.run(generate_search_phrases.run(args.param1))
 
     elif args.job == 'sync_github_issues':
         sync_issues()
