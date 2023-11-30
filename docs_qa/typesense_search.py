@@ -48,7 +48,7 @@ async def lookup_search_phrases_similar(search_queries: GeneratedSearchQueries):
         "searches":
             [
                 {
-                    "collection":"altinn-studio-docs-search-phrases",      
+                    "collection": cfg.SEARCH_PHRASE_COLLECTION,
                     "q": query,
                     "query_by": "search_phrase,phrase_vec",
                     "include_fields": "url",
@@ -212,7 +212,7 @@ async def lookup_search_phrases(url):
         "searches":
             [
                 {
-                    "collection":"altinn-studio-docs-search-phrases",                
+                    "collection": cfg.SEARCH_PHRASE_COLLECTION,                
                     "q": "*",
                     "query_by":"url",
                     "include_fields": "id,url,search_phrase,sort_order",

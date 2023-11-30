@@ -19,3 +19,4 @@ TYPESENSE_CONFIG:
     protocol: 'https'
   api_key: 'xyx'
   connection_timeout_seconds': 2
+SEARCH_PHRASE_COLLECTION: 'altinn-studio-docs-search-phrases-test'
