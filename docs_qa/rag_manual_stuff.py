@@ -129,9 +129,11 @@ async def rag_with_typesense(user_input):
             print(f'MAX_CONTEXT_LENGTH: {cfg.MAX_CONTEXT_LENGTH} exceeded, loaded {len(loaded_docs)} docs.')
             break
 
-    not_loaded_urls = [hit['url'] for hit in search_hits]
-    not_loaded_urls = [url for url in not_loaded_urls if url not in loaded_urls]
-    not_loaded_urls = list(set(not_loaded_urls))
+    not_loaded_urls = []
+    for hit in search_hits:
+        url = hit['url']
+        if url not in loaded_urls and url not in not_loaded_urls:
+            not_loaded_urls.append(url)
 
     durations['download_docs'] = timeit.default_timer() - start
 
