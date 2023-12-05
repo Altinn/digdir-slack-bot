@@ -26,7 +26,9 @@ def run_db_build():
     texts = text_splitter.split_documents(documents)
 
     api_key = os.environ['OPENAI_API_KEY_ALTINN3_DEV']
-    embeddings = OpenAIEmbeddings(openai_api_key=api_key)
+    endpoint = os.environ['OPENAI_API_URL_ALTINN3_DEV']
+    
+    embeddings = OpenAIEmbeddings(openai_api_key=api_key, openai_api_base=endpoint)
 
     vectorstore = FAISS.from_documents(texts, embeddings)
     vectorstore.save_local(cfg.DB_FAISS_PATH)

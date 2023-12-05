@@ -3,9 +3,6 @@
         Module: Chain functions
 ===========================================
 '''
-import box
-import yaml
-
 from langchain.prompts import PromptTemplate 
 from langchain.chains import LLMChain
 from langchain.embeddings import HuggingFaceEmbeddings
@@ -16,7 +13,7 @@ from .config_chain import config
 
 cfg = config()
 
-def set_choose_team_prompt():
+def load_prompt():
     """
     Prompt template for QA retrieval for each vectorstore
     """
@@ -30,18 +27,15 @@ def build_retrieval_choose_team(llm, prompt):
 
 
 def setup_dbqa():
-    # embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2",
-    #                                    model_kwargs={'device': 'cpu'})
-    # vectordb = FAISS.load_local(cfg.DB_FAISS_PATH, embeddings)
     llm = build_llm()
-    choose_team_prompt = set_choose_team_prompt()
-    dbqa = build_retrieval_choose_team(llm, choose_team_prompt)
+    loaded_prompt = load_prompt()
+    dbqa = build_retrieval_choose_team(llm, loaded_prompt)
 
     return dbqa
 
 
 def query(dbqa, user_input):
-    if cfg.MODEL_TYPE == "gpt-4":
+    if cfg.MODEL_TYPE.startswith("gpt"):
         return dbqa(user_input)
     else:
         return dbqa({'query': user_input})

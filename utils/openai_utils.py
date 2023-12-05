@@ -9,6 +9,8 @@ from tqdm.notebook import tqdm  # for printing progress bars
 
 
 openai.api_key = os.environ.get('OPENAI_API_KEY_ALTINN3_DEV')
+openai.api_base = endpoint = os.environ['OPENAI_API_URL_ALTINN3_DEV']
+
 
 
 def json_gpt(input: str, model: str):

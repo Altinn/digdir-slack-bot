@@ -13,7 +13,11 @@ with open('docs_qa/config/config.yml', 'r', encoding='utf8') as ymlfile:
 
 
 instructor.patch()
+openai.api_type = 'azure'
 openai.api_key = os.environ['OPENAI_API_KEY_ALTINN3_DEV']
+openai.api_base = os.environ['OPENAI_API_URL_ALTINN3_DEV']
+openai.api_version = os.environ['AZURE_OPENAI_VERSION']
+
 
 class GeneratedSearchQueries(BaseModel):
     searchQueries: list[str] = Field(..., description="Array of search queries.")
@@ -24,7 +28,7 @@ pp = pprint.PrettyPrinter(indent=2)
 
 async def run_query_async(user_input) -> GeneratedSearchQueries:    
     query_result: GeneratedSearchQueries = openai.ChatCompletion.create(
-        model=cfg.MODEL_TYPE,
+        engine=os.environ['AZURE_OPENAI_DEPLOYMENT'],
         response_model=GeneratedSearchQueries,
         temperature=0.1,
         messages=[
