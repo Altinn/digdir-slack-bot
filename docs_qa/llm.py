@@ -27,7 +27,6 @@ openai.api_version = os.environ['AZURE_OPENAI_VERSION']
 def build_llm():
     if cfg.MODEL_TYPE.startswith('gpt-'):
         llm = AzureChatOpenAI(
-              engine=os.environ['AZURE_OPENAI_DEPLOYMENT'],
               deployment_name=os.environ['AZURE_OPENAI_DEPLOYMENT'],
               temperature=cfg.TEMPERATURE, 
               max_tokens=cfg.MAX_NEW_TOKENS)
