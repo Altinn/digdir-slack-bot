@@ -23,6 +23,8 @@ with open('docs_qa/config/config.yml', 'r', encoding='utf8') as ymlfile:
 
 instructor.patch()
 openai.api_key = os.environ['OPENAI_API_KEY_ALTINN3_DEV']
+openai.api_base = os.environ['OPENAI_API_URL_ALTINN3_DEV']
+
 pp = pprint.PrettyPrinter(indent=2)
 
 

@@ -19,6 +19,7 @@ def ask_openai(system: str, user: str) -> str:
 
     # Load your OpenAI API key from the environment variable
     openai.api_key = os.environ.get('OPENAI_API_KEY_ALTINN3_DEV')
+    openai.api_base = os.environ['OPENAI_API_KEY_ALTINN3_DEV']
 
     # Ensure API key is present
     if not openai.api_key:
