@@ -94,7 +94,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
             thread_ts=thread_ts,
         )
     else:
-        thread1 = say(text="Querying our documentation...", thread_ts=thread_ts)
+        thread1 = say(text="Reading Altinn Studio docs...", thread_ts=thread_ts)
 
     try:
         rag_response = await rag_with_typesense(text)
@@ -152,15 +152,6 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     )
 
     blocks = [
-        {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": f"Search queries generated:\n> {rag_response['search_queries']}",
-            },
-        },
-        {"type": "section", "text": {"type": "mrkdwn", "text": "Results"}},
-        {"type": "divider"},
         answer_block,
     ]
     if len(relevant_sources) > 0:
@@ -170,12 +161,25 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         blocks.append(
             {
                 "type": "section",
-                "text": {"type": "mrkdwn", "text": f"Relevant links:\n{links_mrkdwn}"},
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"For more information:\n{links_mrkdwn}",
+                },
             }
         )
 
+    blocks.append(
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": f"Generated in {round(rag_response['durations']['total'], ndigits=1)} seconds.",
+            },
+        }
+    )
+
     reply_text = (
-        f"Suggested reply:\n{answer}"
+        f"Answer:\n{answer}"
         if hitl_enabled
         else f'Here is what I found related to your query:\n   >"{text}"\n\n_{answer}_'
     )
@@ -201,7 +205,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     source_docs = rag_response["source_documents"]
     not_loaded_urls = rag_response["not_loaded_urls"]
     table_blocks = []
-    fields_list = "*Source list*\n"
+    fields_list = "*Retrieved articles*\n"
     not_loaded_list = ""
 
     # Data rows
@@ -220,7 +224,20 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         fields_list += f"#{i+1}: <{source}|{source_text}>\n"
 
     for i, url in enumerate(not_loaded_urls):
-        not_loaded_list += f"#{i+1}: <{url}|{url.replace('https://docs.altinn.studio/', '')}>\n"
+        not_loaded_list += (
+            f"#{i+1}: <{url}|{url.replace('https://docs.altinn.studio/', '')}>\n"
+        )
+
+    search_queries_summary = "\n> ".join(rag_response["search_queries"])
+    blocks.append(
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": f"Phrases generated for retrieval:\n> {search_queries_summary}",
+            },
+        }
+    )
 
     table_blocks.append(
         {
@@ -231,7 +248,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
             },
         }
     )
-    if len(not_loaded_list) > 0:        
+    if len(not_loaded_list) > 0:
         table_blocks.append(
             {
                 "type": "section",
@@ -242,69 +259,38 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
             }
         )
 
-    # Send the message
-    app.client.chat_postMessage(
-        thread_ts=thread_ts,
-        text="Source Documents",
-        blocks=table_blocks,
-        channel=target_channel_id,
+    table_blocks.append(
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": f"Processing times (sec):\n```\n{json.dumps(rag_response['durations'], indent=2)}```",
+            },
+        }
     )
 
-    # # Process source documents
-    # source_docs = rag_response["source_documents"]
-    # for i, doc in enumerate(source_docs):
-    #     # print(f"doc {i}:\n{doc}")
-    #     source = doc["metadata"]["source"]
-    #     path_segment_index = source.index(known_path_segment)
-    #     if path_segment_index >= 0:
-    #         slice_start = (
-    #             (-1 * len(source)) + path_segment_index + len(known_path_segment) + 1
-    #         )
-    #         # print(f'slice_start: {slice_start}')
-    #         source = "https://docs.altinn.studio/" + source[slice_start:]
-    #         source = source.rpartition("/")[0]
+    # TODO: add to channel config db table
+    if False:
+        app.client.chat_postMessage(
+            thread_ts=thread_ts,
+            text="Retrieved documentation:",
+            blocks=table_blocks,
+            channel=target_channel_id,
+        )
 
-    #     page_content = doc["page_content"].replace("\n", "\n>")
-
-    #     sourceSummary = f"Source #{i+1}: {source}"
-    #     source_blocks = [
-    #         ({
-    #             "type": "section",
-    #             "text": {"type": "mrkdwn", "text": f"{sourceSummary}"},
-    #             "accessory": {
-    #                 "type": "button",
-    #                 "text": {
-    #                     "type": "plain_text",
-    #                     "text": f"Send",
-    #                 },
-    #                 "value": f'{src_evt_context.team}|{src_evt_context.channel}|{src_evt_context.ts}',
-    #                 "action_id": "docs|qa|approve_reply",
-    #             },
-    #         }
-    #         if hitl_enabled
-    #         else {
-    #             "type": "section",
-    #             "text": {"type": "mrkdwn", "text": f"{sourceSummary}"},
-    #         }),
-    #     ]
-    #     app.client.chat_postMessage(
-    #         thread_ts=thread_ts,
-    #         text=sourceSummary,
-    #         blocks=source_blocks,
-    #         channel=target_channel_id,
-    #     )
-
-    say(
-        thread_ts=thread_ts,
-        channel=target_channel_id,
-        blocks=[
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": f"Processing times (sec):\n```\n{json.dumps(rag_response['durations'], indent=2)}```",
-                },
-            }
-        ],
-        text=f"Processing times (sec): {rag_response['durations']['total']}",
-    )
+    # TODO: add to channel config db table
+    if False:
+        say(
+            thread_ts=thread_ts,
+            channel=target_channel_id,
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"Processing times (sec):\n```\n{json.dumps(rag_response['durations'], indent=2)}```",
+                    },
+                }
+            ],
+            text=f"Processing times (sec): {rag_response['durations']['total']}",
+        )
