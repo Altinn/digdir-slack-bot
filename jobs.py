@@ -10,9 +10,10 @@ if __name__ == "__main__":
                         default='',
                         help='Specify a job name - "generate_search_phrases", "sync_github_issues"')
     parser.add_argument('param1',
+                        nargs='?',
+                        default=None,
                         type=str,
-                        default='',
-                        help='Specify a parameter')
+                            help='Specify a parameter')
     args = parser.parse_args()
 
     if args.job == 'generate_search_phrases':
