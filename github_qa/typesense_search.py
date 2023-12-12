@@ -1,15 +1,14 @@
+import os
 import box
 import yaml
 import pprint
 import typesense
 from docs_qa.extract_search_terms import GeneratedSearchQueries
+from .config import config 
+
 
 pp = pprint.PrettyPrinter(indent=2)
-
-# Import config vars
-with open('github_qa/config.yml', 'r', encoding='utf8') as ymlfile:
-    cfg = box.Box(yaml.safe_load(ymlfile))
-
+cfg = config()
 
 async def typesense_search_multiple(search_queries: GeneratedSearchQueries):
     client = typesense.Client(cfg.TYPESENSE_CONFIG)
