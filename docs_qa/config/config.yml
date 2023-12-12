@@ -12,11 +12,12 @@ MAX_NEW_TOKENS: 1000
 TEMPERATURE: 1.0
 MAX_CONTEXT_LENGTH: 40000
 MAX_SOURCE_LENGTH: 4000
+MAX_CONTEXT_DOC_COUNT: 10
 TYPESENSE_CONFIG:
   nodes:
-  - host: 'altinn-typesense-api.azurewebsites.net'
+  - host: 'u4zlso3dx2vtip6jp-1.a1.typesense.net'
     port: '443'
     protocol: 'https'
-  api_key: 'xyx'
   connection_timeout_seconds': 2
-SEARCH_PHRASE_COLLECTION: 'altinn-studio-docs-search-phrases-test'
+DOCS_COLLECTION: 'altinn-studio-docs'
+DOCS_SEARCH_PHRASE_COLLECTION: 'altinn-studio-docs-search-phrases'

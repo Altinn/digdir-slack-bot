@@ -1,4 +1,3 @@
-import box
 import timeit
 import yaml
 import pprint
@@ -13,14 +12,10 @@ from github_qa.prompts import qa_template
 from docs_qa.extract_search_terms import run_query_async
 from github_qa.typesense_search import typesense_search_multiple
 from typing import Sequence
-
+from .config import config
 
 pp = pprint.PrettyPrinter(indent=2)
-
-# Import config vars
-with open('github_qa/config.yml', 'r', encoding='utf8') as ymlfile:
-    cfg = box.Box(yaml.safe_load(ymlfile))
-
+cfg = config()
 
 class RagContextRefs(BaseModel):
     # relevant_content: str = Field(..., description="Three or four sentences from the most relevant parts of the context document")
@@ -46,11 +41,17 @@ async def rag_with_typesense(user_input):
     extract_search_queries = await run_query_async(user_input)
     durations['generate_searches'] = timeit.default_timer() - start
 
-    # print(f'generated queries:')
-    # pp.pprint(extract_search_queries)
+    print(f'generated queries:')
+    pp.pprint(extract_search_queries)
 
     start = timeit.default_timer()
-    search_response = await typesense_search_multiple(extract_search_queries)
+
+    try:
+        search_response = await typesense_search_multiple(extract_search_queries)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        pass
+
     durations['execute_searches'] = timeit.default_timer() - start
 
     # print(f'search response:')
@@ -105,8 +106,8 @@ async def rag_with_typesense(user_input):
             loaded_doc['closed_at'] = closed_at
 
         # skip hits that are clearly out of range
-        if search_hit.get('vector_distance', 1.0) > 0.9:
-            continue
+        # if search_hit.get('vector_distance', 1.0) > 0.9:
+        #     continue
 
         if (docs_length + len(doc_trimmed)) > cfg.MAX_CONTEXT_LENGTH:
             break

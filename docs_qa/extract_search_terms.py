@@ -5,12 +5,9 @@ import openai
 import instructor
 from pydantic import BaseModel, Field
 import pprint
+from .config import config
 
-
-# Import config vars
-with open('docs_qa/config/config.yml', 'r', encoding='utf8') as ymlfile:
-    cfg = box.Box(yaml.safe_load(ymlfile))
-
+cfg = config()
 
 instructor.patch()
 openai.api_type = 'azure'

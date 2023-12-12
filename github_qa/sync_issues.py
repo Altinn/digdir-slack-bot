@@ -6,12 +6,9 @@ import math
 import pprint
 import typesense
 from datetime import datetime
+from .config import config
 
-with open('github_qa/config.yml', 'r', encoding='utf8') as ymlfile:
-    cfg = box.Box(yaml.safe_load(ymlfile))
-
-get_github_batch_size = 80
-
+cfg = config()
 pp = pprint.PrettyPrinter(indent=2)
 
 def get_latest_issues(org_repo, page_count):
@@ -20,7 +17,7 @@ def get_latest_issues(org_repo, page_count):
     url = f"https://api.github.com/repos/{org_repo}/issues"
     params = {
         "state": "all",
-        "per_page": get_github_batch_size,
+        "per_page": cfg.GH_ISSUES_QUERY_BATCH_SIZE,
         "sort": "updated",
         "direction": "asc", 
         "since": updated_after.isoformat()
@@ -60,7 +57,7 @@ def batch_issues(org_repo, batch_size=20, page_count=3):
 def upload_issues_to_typesense(org_repo, max_issue_count=120):
     client = typesense.Client(cfg.TYPESENSE_CONFIG)
 
-    for issue_batch in batch_issues(org_repo, 40, math.ceil(max_issue_count / get_github_batch_size)):
+    for issue_batch in batch_issues(org_repo, 40, math.ceil(max_issue_count / cfg.GH_ISSUES_QUERY_BATCH_SIZE)):
         upload_batch = []
 
         for issue in issue_batch:
@@ -130,10 +127,10 @@ def store_issues_updated_at_filter(org_repo, timestamp):
         yaml.dump(cfg.to_dict(), ymlfile)
 
 def main():
-    upload_issues_to_typesense('Altinn/altinn-studio', 80)
-    upload_issues_to_typesense('Altinn/app-frontend-react', 80)
-    upload_issues_to_typesense('Altinn/app-lib-dotnet', 80)
-    upload_issues_to_typesense('Altinn/app-template-dotnet', 80)
+    upload_issues_to_typesense('Altinn/altinn-studio', 1000)
+    upload_issues_to_typesense('Altinn/app-frontend-react', 1000)
+    upload_issues_to_typesense('Altinn/app-lib-dotnet', 1000)
+    upload_issues_to_typesense('Altinn/app-template-dotnet', 1000)
 
 if __name__ == "__main__":
     main()

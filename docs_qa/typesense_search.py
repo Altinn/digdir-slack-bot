@@ -1,17 +1,13 @@
-import box
-import yaml
 import pprint
 import typesense
 # from sentence_transformers import SentenceTransformer
 from docs_qa.extract_search_terms import GeneratedSearchQueries
+from .config import config
 
 pp = pprint.PrettyPrinter(indent=2)
 
-# Import config vars
-with open('docs_qa/config/config.yml', 'r', encoding='utf8') as ymlfile:
-    cfg = box.Box(yaml.safe_load(ymlfile))
-
-
+cfg = config()
+    
 async def typesense_search_multiple(search_queries: GeneratedSearchQueries):
     client = typesense.Client(cfg.TYPESENSE_CONFIG)
 
@@ -21,7 +17,7 @@ async def typesense_search_multiple(search_queries: GeneratedSearchQueries):
         "searches":
             [
                 {
-                    "collection":"altinn-studio-docs",                
+                    "collection": cfg.DOCS_COLLECTION,
                     "q": query,
                     "query_by":"content,embedding",
                     "include_fields":"hierarchy.lvl0,hierarchy.lvl1,hierarchy.lvl2,hierarchy.lvl3,hierarchy.lvl4,url_without_anchor,type,id,content_markdown",
@@ -48,10 +44,10 @@ async def lookup_search_phrases_similar(search_queries: GeneratedSearchQueries):
         "searches":
             [
                 {
-                    "collection": cfg.SEARCH_PHRASE_COLLECTION,
+                    "collection": cfg.DOCS_SEARCH_PHRASE_COLLECTION,
                     "q": query,
                     "query_by": "search_phrase,phrase_vec",
-                    "include_fields": "url",
+                    "include_fields": "search_phrase,url",
                     "group_by": "url",
                     "group_limit": 1,
                     "limit": 20,
@@ -78,6 +74,9 @@ async def lookup_search_phrases_similar(search_queries: GeneratedSearchQueries):
         # for phrase in result['hits']
     ]
     search_phrase_hits.sort(key=lambda x: x['hybrid_search_info']['rank_fusion_score'], reverse=True)
+
+    print(f'Sorted search phrase result list:')
+    pp.pprint(search_phrase_hits)
 
     url_list = [
         {
@@ -112,7 +111,7 @@ async def typesense_search_multiple_vector(search_queries: GeneratedSearchQuerie
         "searches":
             [
                 {
-                    "collection":"altinn-studio-docs",                
+                    "collection": cfg.DOCS_COLLECTION,
                     "q": "*",
                     "vector_query": f"embedding:([{','.join(str(v) for v in query)}], k:10)",
                     "include_fields":"hierarchy.lvl0,hierarchy.lvl1,hierarchy.lvl2,hierarchy.lvl3,hierarchy.lvl4,url_without_anchor,type,id,content_markdown",
@@ -133,7 +132,7 @@ async def typesense_retrieve_all_urls(page, page_size):
         "searches":
             [
                 {
-                    "collection":"altinn-studio-docs",                
+                    "collection": cfg.DOCS_COLLECTION,                
                     "q": "*",
                     "query_by":"url_without_anchor",
                     "include_fields":"url_without_anchor,content_markdown,id",
@@ -158,7 +157,7 @@ async def typesense_retrieve_all_by_url(url_list):
 
     url_searchs = [
         {
-            "collection":"altinn-studio-docs",                
+            "collection": cfg.DOCS_COLLECTION,             
             "q": ranked_url['url'],
             "query_by":"url_without_anchor",
             "include_fields":"hierarchy.lvl0,hierarchy.lvl1,hierarchy.lvl2,hierarchy.lvl3,hierarchy.lvl4,url_without_anchor,type,id,content_markdown",
@@ -195,7 +194,7 @@ def setup_search_phrase_schema(collection_name_tmp):
                 {'name': 'item_priority', 'type': 'int64'},
             ],
             'default_sorting_field': 'sort_order',
-            'token_separators': ['_', '-']
+            'token_separators': ['_', '-', '/']
         }
     
     try:
@@ -208,7 +207,7 @@ async def lookup_search_phrases(url, collection_name: str):
 
     client = typesense.Client(cfg.TYPESENSE_CONFIG)
     if collection_name == None:
-        collection_name = cfg.SEARCH_PHRASE_COLLECTION
+        collection_name = cfg.DOCS_SEARCH_PHRASE_COLLECTION
 
     multi_search_args = {
         "searches":

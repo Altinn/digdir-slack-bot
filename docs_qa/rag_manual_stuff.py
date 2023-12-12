@@ -13,9 +13,12 @@ from docs_qa.prompts import qa_template
 from docs_qa.extract_search_terms import run_query_async
 import docs_qa.typesense_search as search
 from typing import Sequence
-
+from .config import config
 
 pp = pprint.PrettyPrinter(indent=2)
+
+cfg = config()
+
 
 # Import config vars
 with open('docs_qa/config/config.yml', 'r', encoding='utf8') as ymlfile:
@@ -102,7 +105,6 @@ async def rag_with_typesense(user_input):
         if unique_url in loaded_urls:
             continue
 
-        # doc_md = await html_to_markdown(unique_url, "#body-inner")
         doc_md = search_hit['content_markdown']
         doc_trimmed = doc_md[:cfg.MAX_SOURCE_LENGTH]
         if (docs_length + len(doc_trimmed)) > cfg.MAX_CONTEXT_LENGTH:
@@ -117,7 +119,7 @@ async def rag_with_typesense(user_input):
                 'source': unique_url,                                
             }
         }    
-        print(f'loaded converted html to md doc, length= {len(doc_trimmed)}, url= {unique_url}')
+        print(f'loaded markdown doc, length= {len(doc_trimmed)}, url= {unique_url}')
         # pp.pprint(loaded_doc)
 
         docs_length += len(doc_trimmed)
@@ -127,6 +129,9 @@ async def rag_with_typesense(user_input):
 
         if docs_length >= cfg.MAX_CONTEXT_LENGTH:
             print(f'MAX_CONTEXT_LENGTH: {cfg.MAX_CONTEXT_LENGTH} exceeded, loaded {len(loaded_docs)} docs.')
+            break
+
+        if len(loaded_docs) >= cfg.MAX_CONTEXT_DOC_COUNT:
             break
 
     not_loaded_urls = []

@@ -8,9 +8,7 @@ import pprint
 from dotenv import find_dotenv, load_dotenv
 
 import openai
-from langchain.llms import CTransformers
 from langchain.chat_models import AzureChatOpenAI
-
 from .config_chain import config
 
 

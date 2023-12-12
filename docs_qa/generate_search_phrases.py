@@ -1,3 +1,4 @@
+import os
 import box
 import timeit
 import yaml
@@ -14,13 +15,10 @@ from docs_qa.chains import build_llm
 from docs_qa.prompts import generate_search_phrases_template
 import docs_qa.typesense_search as search
 from typing import Sequence
-
+from .config import config
 
 pp = pprint.PrettyPrinter(indent=2)
-
-# Import config vars
-with open('docs_qa/config/config.yml', 'r', encoding='utf8') as ymlfile:
-    cfg = box.Box(yaml.safe_load(ymlfile))
+cfg = config()
 
 
 class RagContextRefs(BaseModel):
@@ -37,7 +35,7 @@ async def run(collection_name_tmp):
     client = typesense.Client(cfg.TYPESENSE_CONFIG)
 
     if collection_name_tmp == None or len(collection_name_tmp) == 0:
-        collection_name_tmp = f'{cfg.SEARCH_PHRASE_COLLECTION}_{int(datetime.datetime.now().timestamp())}'
+        collection_name_tmp = f'{cfg.DOCS_SEARCH_PHRASE_COLLECTION}_{int(datetime.datetime.now().timestamp())}'
 
     search.setup_search_phrase_schema(collection_name_tmp)
 
@@ -162,11 +160,11 @@ async def run(collection_name_tmp):
 def commit_tmp_collection(client: typesense.Client, collection_name_tmp: str):
         """Update alias to point to new collection"""
         old_collection_name = None
-        alias_name = cfg.SEARCH_PHRASE_COLLECTION
+        alias_name = cfg.DOCS_SEARCH_PHRASE_COLLECTION
 
         try:
             old_collection_name = client.aliases[alias_name].retrieve()['collection_name']
-        except exceptions.ObjectNotFound:
+        except typesense.exceptions.ObjectNotFound:
             pass
 
         client.aliases.upsert(alias_name, {'collection_name': collection_name_tmp})

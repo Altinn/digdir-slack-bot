@@ -42,13 +42,18 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     message_category = categorize_response["text"]
     print(f"Message category: {message_category}")
 
-
-    bot_log(BotLogEntry(
-        slack_context= src_evt_context,
-        elapsed_ms= slack_utils.time_s_to_ms(categorize_response['duration']),
-        step_name= 'categorize_message',
-        payload= {"user_input": text, "bot_name": 'gh_issues', 'message_category': message_category}
-    ))
+    bot_log(
+        BotLogEntry(
+            slack_context=src_evt_context,
+            elapsed_ms=slack_utils.time_s_to_ms(categorize_response["duration"]),
+            step_name="categorize_message",
+            payload={
+                "user_input": text,
+                "bot_name": "gh_issues",
+                "message_category": message_category,
+            },
+        )
+    )
 
     # if message_category != "[Support Request]":
     #     # we only handle support requests, so done
@@ -57,24 +62,25 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     #     )
     #     return
 
-
     first_message_text = (
         f"<{src_msg_link}|Incoming message> from <#{main_channel_id}>"
         if hitl_enabled
         else f""
     )
-    quoted_input = text.replace("\n", "\n>")    
+    quoted_input = text.replace("\n", "\n>")
 
     if hitl_enabled:
         startMsg = app.client.chat_postMessage(
             text=first_message_text,
-            blocks=[{
-                        "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": first_message_text,
-                        },
-                    }],
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": first_message_text,
+                    },
+                }
+            ],
             channel=target_channel_id,
         )
         thread_ts = startMsg["ts"]
@@ -88,29 +94,31 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
             thread_ts=thread_ts,
         )
     else:
-        thread1 = say(
-            text="Checking Github issues", thread_ts=thread_ts
-        )
+        thread1 = say(text="Checking Github issues", thread_ts=thread_ts)
 
     try:
-        rag_response = await rag_with_typesense(text)   
-                
-        payload = {"user_input": text, "bot_name": chain_name,
-                      'search_queries': rag_response['search_queries'],
-                      'answer': rag_response['result'],
-                      'source_urls': rag_response['source_urls'],
-                      'relevant_urls': rag_response['relevant_urls'],    
-                      }
-        if rag_response['rag_success'] is not None:
-            payload['rag_success'] = rag_response['rag_success']
+        rag_response = await rag_with_typesense(text)
 
-        bot_log(BotLogEntry(
-            slack_context= src_evt_context,
-            elapsed_ms= slack_utils.time_s_to_ms(rag_response['durations']['total']),
-            durations= rag_response['durations'],
-            step_name= 'rag_with_typesense',
-            payload= payload,
-        ))
+        payload = {
+            "user_input": text,
+            "bot_name": chain_name,
+            "search_queries": rag_response["search_queries"],
+            "answer": rag_response["result"],
+            "source_urls": rag_response["source_urls"],
+            "relevant_urls": rag_response["relevant_urls"],
+        }
+        if rag_response["rag_success"] is not None:
+            payload["rag_success"] = rag_response["rag_success"]
+
+        bot_log(
+            BotLogEntry(
+                slack_context=src_evt_context,
+                elapsed_ms=slack_utils.time_s_to_ms(rag_response["durations"]["total"]),
+                durations=rag_response["durations"],
+                step_name="rag_with_typesense",
+                payload=payload,
+            )
+        )
     except openai.error.ServiceUnavailableError as e:
         print(f"OpenAI API error: {e}")
         app.client.chat_postMessage(
@@ -128,44 +136,44 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         )
         return
 
-
     answer = rag_response["result"]
-    relevant_sources = rag_response['relevant_urls']
+    relevant_sources = rag_response["relevant_urls"]
 
-    answer_block = ({
+    answer_block = (
+        {
             "type": "section",
             "text": {"type": "mrkdwn", "text": answer},
             "accessory": {
                 "type": "button",
                 "text": {"type": "plain_text", "text": f"Send"},
-                "value": f'{src_evt_context.team}|{src_evt_context.channel}|{src_evt_context.ts}',
+                "value": f"{src_evt_context.team}|{src_evt_context.channel}|{src_evt_context.ts}",
                 "action_id": "docs|qa|approve_reply",
             },
         }
         if hitl_enabled
         else {
             "type": "section",
-            "text": {"type": "mrkdwn", "text": answer},            
-        })
-    
-    blocks = [
-        {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": f"Search queries generated:\n> {rag_response['search_queries']}",
-            },
-        },
-        {"type": "section", "text": {"type": "mrkdwn", "text": "Results"}},
-        {"type": "divider"},
-        answer_block,        
-    ]
+            "text": {"type": "mrkdwn", "text": answer},
+        }
+    )
+
+    blocks = [answer_block]
+
     if len(relevant_sources) > 0:
-        links_mrkdwn = "\n".join(f"<{source['url']}|{source['title']}>" for source in relevant_sources) 
-        blocks.append({
+        links_mrkdwn = "\n".join(
+            f"<{source['url']}|{source['title']}>" for source in relevant_sources
+        )
+        blocks.append(
+            {
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": f"Relevant links:\n{links_mrkdwn}"},
+            }
+        )
+
+    blocks.append({
             "type": "section",
-            "text": {"type": "mrkdwn", "text": f"Relevant links:\n{links_mrkdwn}" }
-        })   
+            "text": {"type": "mrkdwn", "text": f"Generated in {round(rag_response['durations']['total'], ndigits=1)} seconds."},
+        })
 
     reply_text = (
         f"Suggested reply:\n{answer}"
@@ -184,56 +192,40 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     except SlackApiError as e:
         print(f"Error attempting to delete temp bot message {e}")
 
-
     # Process source documents
+    source_blocks = []
     source_docs = rag_response["source_documents"]
     for i, doc in enumerate(source_docs):
         # print(f"doc {i}:\n{doc}")
         source = doc["metadata"]["source"]
+        vector_distance = round(doc.get("vector_distance"), 3)
+        
+        source_summary = f"{i+1}: <{source}|{doc.get('title','')}> [{doc.get('state', '')}]"
 
-        # path_segment_index = source.index(known_path_segment)
-        # if path_segment_index >= 0:
-        #     slice_start = (
-        #         (-1 * len(source)) + path_segment_index + len(known_path_segment) + 1
-        #     )
-        #     # print(f'slice_start: {slice_start}')
-        #     source = "https://docs.altinn.studio/" + source[slice_start:]
-        #     source = source.rpartition("/")[0]
+        label_list = doc.get('labels', [])
+        if len(label_list) > 0:
+            label_list = [f"`{label}`" for label in label_list]
+            source_summary += f"\n> labels: {' '.join(label_list)}"                
+        
+        source_blocks.append(
+            {
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": source_summary},
+            })
 
-        sourceSummary = f"#{i+1}: {doc.get('title','')}"        
-        vector_distance = round(doc.get('vector_distance'), 3)
-        source_blocks = [
-            {
+    source_blocks.append({
                 "type": "section",
-                "text": {"type": "mrkdwn", "text": f"<{source}|{sourceSummary}>"}
-            },
-            {
-                "type": "section",
-                "text": {                    
-                    "type": "mrkdwn", "text": f"Status: {doc.get('state', '')}, labels: {doc.get('labels', 'None')}",
-                },                
-            },
-            {
-                "type": "section",
-                "text": {                    
-                    "type": "mrkdwn", "text": f"Vector Distance: {vector_distance}",
-                },                
-            },
-        ]
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"Processing times (sec):\n```\n{json.dumps(rag_response['durations'], indent=2)}```",
+                },
+            })
+
+    # TODO: add to channel config 
+    if False:
         app.client.chat_postMessage(
             thread_ts=thread_ts,
-            text=sourceSummary,
+            text="Retrieved Github issues",
             blocks=source_blocks,
             channel=target_channel_id,
         )
-
-    say(
-        thread_ts=thread_ts,
-        channel=target_channel_id,
-        blocks=
-            [{
-                "type": "section",
-                "text": {"type": "mrkdwn", "text": f"Processing times (sec):\n```\n{json.dumps(rag_response['durations'], indent=2)}```"},
-            }],
-        text= f"Processing times (sec): {rag_response['durations']['total']}",
-    )
