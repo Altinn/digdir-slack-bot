@@ -123,22 +123,33 @@ def handle_reaction_added(event, say):
             channel=event["item"]["channel"],
             timestamp=event["item"]["ts"]
         )
-        reactions = message_info["message"]["reactions"]
+        reactions = message_info["message"].get("reactions", [])
         print(f"Current reactions: {reactions}")
     except SlackApiError as e:
         print(f"Error fetching reactions: {e}")
 
-    if reactions:
+    if reactions != None:
         item_context = slack_utils.get_reaction_item_context(event)
-        db_log_entry = update_reactions(item_context, reactions)
-        print('db_row retrieved:')
-        pp.pprint(db_log_entry)
+        update_reactions(item_context, reactions)
 
 
 @app.event("reaction_removed")
 def handle_reaction_removed(event, say):
     print(f"Reaction removed event: ")
     pp.pprint(event)
+    try:
+        message_info = app.client.reactions_get(
+            channel=event["item"]["channel"],
+            timestamp=event["item"]["ts"]
+        )
+        reactions = message_info["message"].get("reactions", [])
+        print(f"Current reactions: {reactions}")
+    except SlackApiError as e:
+        print(f"Error fetching reactions: {e}")
+
+    if reactions != None:
+        item_context = slack_utils.get_reaction_item_context(event)
+        update_reactions(item_context, reactions)
 
 
 @app.action("[team][choose][confirm]")

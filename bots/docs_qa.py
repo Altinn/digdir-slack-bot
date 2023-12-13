@@ -96,6 +96,8 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     else:
         thread1 = say(text="Reading Altinn Studio docs...", thread_ts=thread_ts)
 
+    rag_with_typesense_error = None
+
     try:
         rag_response = await rag_with_typesense(text)
 
@@ -112,20 +114,16 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         if rag_response["rag_success"] is not None:
             payload["rag_success"] = rag_response["rag_success"]
 
-        bot_log(
-            BotLogEntry(
-                slack_context=src_evt_context,
-                elapsed_ms=slack_utils.time_s_to_ms(rag_response["durations"]["total"]),
-                durations=rag_response["durations"],
-                step_name="rag_with_typesense",
-                payload=payload,
-            )
-        )
     except openai.error.ServiceUnavailableError as e:
-        print(f"OpenAI API error: {e}")
+        rag_with_typesense_error = f"OpenAI API error: {e}"
+    except Exception as ex:
+        rag_with_typesense_error = f"Error: {e}"
+
+
+    if rag_with_typesense_error:
         app.client.chat_postMessage(
             thread_ts=thread_ts,
-            text=f"OpenAI API error: {e}",
+            text=rag_with_typesense_error,
             channel=target_channel_id,
         )
         return
@@ -173,7 +171,8 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": f"Generated in {round(rag_response['durations']['total'], ndigits=1)} seconds.",
+                "text": f"Generated in {round(rag_response['durations']['total'], ndigits=1)} seconds.\n" +
+                f"Please give us your feedback with a :+1: or :-1:",
             },
         }
     )
@@ -195,10 +194,18 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     except SlackApiError as e:
         print(f"Error attempting to delete temp bot message {e}")
 
-    # print(f'{answer}')
-    # say(thread_ts=thread_ts,
-    #     text=f'>{answer}')
+    
 
+    bot_log(
+        BotLogEntry(
+            slack_context=slack_utils.get_context_from_thread_response(src_evt_context.ts, thread1),
+            elapsed_ms=slack_utils.time_s_to_ms(rag_response["durations"]["total"]),
+            durations=rag_response["durations"],
+            step_name="rag_with_typesense",
+            payload=payload,
+        )
+    )
+    
     # known_path_segment = "altinn/docs/content"
     known_path_segment = "https://docs.altinn.studio"
 

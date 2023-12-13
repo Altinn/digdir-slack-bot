@@ -26,6 +26,17 @@ def get_event_context(msg_body) -> SlackContext:
     )
     return slack_context
 
+def get_context_from_thread_response(parent_ts, slack_response) -> SlackContext:
+    slack_context = SlackContext(
+        ts=slack_response.get('ts'),
+        thread_ts=parent_ts,
+        channel=slack_response.get('channel'),
+        team=None,
+        user=None,
+        time_utc=None
+    )
+    return slack_context
+
 def get_reaction_item_context(evt) -> SlackContext:
     item = evt.get('item', {})
     slack_context = SlackContext(
