@@ -222,7 +222,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
             })
 
     # TODO: add to channel config 
-    if False:
+    if True:
         app.client.chat_postMessage(
             thread_ts=thread_ts,
             text="Retrieved Github issues",
