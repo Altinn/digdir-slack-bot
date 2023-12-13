@@ -24,3 +24,11 @@ def bot_log(entry: BotLogEntry):
     
     print(f'insert_response: {insert_response}')
     return insert_response
+
+def update_reactions(slack_context: SlackContext, reactions: object):
+    
+    ts = slack_context.ts
+    channel = slack_context.channel
+    # retrieve the correct row, looking for slack_context.ts in the slack_context column, which is jsonb type
+    row = supabase.table('bot_log').select("*").eq("slack_context->>ts", ts).eq("slack_context->>channel", channel).execute()
+    return row

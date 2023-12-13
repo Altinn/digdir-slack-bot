@@ -19,7 +19,7 @@ from bots.choose_team import run_bot_async as bot_choose_team
 from bots.code_qa import run_bot_async as bot_code_qa
 from bots.docs_qa import run_bot_async as bot_docs_qa
 from bots.github_qa import run_bot_async as bot_github_qa
-from bots.structured_log import bot_log, BotLogEntry
+from bots.structured_log import bot_log, update_reactions, BotLogEntry
 
 # Import config vars
 with open("bolt-config.yml", "r", encoding="utf8") as ymlfile:
@@ -118,6 +118,21 @@ def update_message(ack):
 def handle_reaction_added(event, say):
     print(f"Reaction added event: ")
     pp.pprint(event)
+    try:
+        message_info = app.client.reactions_get(
+            channel=event["item"]["channel"],
+            timestamp=event["item"]["ts"]
+        )
+        reactions = message_info["message"]["reactions"]
+        print(f"Current reactions: {reactions}")
+    except SlackApiError as e:
+        print(f"Error fetching reactions: {e}")
+
+    if reactions:
+        item_context = slack_utils.get_reaction_item_context(event)
+        db_log_entry = update_reactions(item_context, reactions)
+        print('db_row retrieved:')
+        pp.pprint(db_log_entry)
 
 
 @app.event("reaction_removed")
