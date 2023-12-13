@@ -229,7 +229,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         )
 
     search_queries_summary = "\n> ".join(rag_response["search_queries"])
-    blocks.append(
+    table_blocks.append(
         {
             "type": "section",
             "text": {
