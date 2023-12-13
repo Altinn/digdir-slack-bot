@@ -113,44 +113,34 @@ def update_message(ack):
     ack()
     print(f"approve button pressed")
 
+def handle_reaction_events(event):
 
-@app.event("reaction_added")
-def handle_reaction_added(event, say):
-    print(f"Reaction added event: ")
-    pp.pprint(event)
+    # TODO: check if in channel before getting current message reactions
+
     try:
         message_info = app.client.reactions_get(
             channel=event["item"]["channel"],
             timestamp=event["item"]["ts"]
         )
         reactions = message_info["message"].get("reactions", [])
-        print(f"Current reactions: {reactions}")
+        # print(f"Current reactions: {reactions}")
+
+        if reactions != None:
+            item_context = slack_utils.get_reaction_item_context(event)
+            update_reactions(item_context, reactions)
+
     except SlackApiError as e:
         print(f"Error fetching reactions: {e}")
 
-    if reactions != None:
-        item_context = slack_utils.get_reaction_item_context(event)
-        update_reactions(item_context, reactions)
+
+@app.event("reaction_added")
+def handle_reaction_added(event, say):
+    handle_reaction_events(event)    
 
 
 @app.event("reaction_removed")
 def handle_reaction_removed(event, say):
-    print(f"Reaction removed event: ")
-    pp.pprint(event)
-    try:
-        message_info = app.client.reactions_get(
-            channel=event["item"]["channel"],
-            timestamp=event["item"]["ts"]
-        )
-        reactions = message_info["message"].get("reactions", [])
-        print(f"Current reactions: {reactions}")
-    except SlackApiError as e:
-        print(f"Error fetching reactions: {e}")
-
-    if reactions != None:
-        item_context = slack_utils.get_reaction_item_context(event)
-        update_reactions(item_context, reactions)
-
+    handle_reaction_events(event)
 
 @app.action("[team][choose][confirm]")
 def handle_team_choose_confirm(ack, body, logger):
