@@ -26,6 +26,29 @@ def get_event_context(msg_body) -> SlackContext:
     )
     return slack_context
 
+def get_context_from_thread_response(parent_ts, slack_response) -> SlackContext:
+    slack_context = SlackContext(
+        ts=slack_response.get('ts'),
+        thread_ts=parent_ts,
+        channel=slack_response.get('channel'),
+        team=None,
+        user=None,
+        time_utc=None
+    )
+    return slack_context
+
+def get_reaction_item_context(evt) -> SlackContext:
+    item = evt.get('item', {})
+    slack_context = SlackContext(
+        ts=item.get('ts'),
+        thread_ts=None,
+        channel=item.get('channel'),
+        team=None,
+        user=None,
+        time_utc=None
+    )
+    return slack_context
+
 def unixtime_to_timestamptz(unixtime):
     if unixtime:
         event_time_utc = datetime.datetime.fromtimestamp(unixtime).astimezone(pytz.timezone('UTC'))                
