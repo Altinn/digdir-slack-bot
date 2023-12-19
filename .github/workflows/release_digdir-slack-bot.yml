@@ -10,7 +10,7 @@
 name: RELEASE - Build and deploy 
 
 env:
-  AZURE_WEBAPP_NAME: digdir-slack-bot-test   
+  AZURE_WEBAPP_NAME: digdir-slack-bot
   PYTHON_VERSION: '3.11'                     
 
 on:
