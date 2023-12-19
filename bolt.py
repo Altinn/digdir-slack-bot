@@ -57,7 +57,7 @@ def event_test(say):
 @app.event("message")
 def handle_message_events(ack, say, body, logger):
     print(f"-- incoming slack message event payload --")
-    pp.pprint(body)
+    # pp.pprint(body)
     src_evt_context = slack_utils.get_event_context(body)
 
     evt = body["event"]

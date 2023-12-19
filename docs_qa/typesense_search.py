@@ -75,8 +75,8 @@ async def lookup_search_phrases_similar(search_queries: GeneratedSearchQueries):
     ]
     search_phrase_hits.sort(key=lambda x: x['hybrid_search_info']['rank_fusion_score'], reverse=True)
 
-    print(f'Sorted search phrase result list:')
-    pp.pprint(search_phrase_hits)
+    # print(f'Sorted search phrase result list:')
+    # pp.pprint(search_phrase_hits)
 
     url_list = [
         {

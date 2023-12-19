@@ -12,8 +12,8 @@ def main(user_input):
     start = timeit.default_timer()
     response = asyncio.run(rag_with_typesense(user_input))
 
-    print('stuff chain response:')
-    pp.pprint(response)
+    # print('stuff chain response:')
+    # pp.pprint(response)
 
     end = timeit.default_timer()
 

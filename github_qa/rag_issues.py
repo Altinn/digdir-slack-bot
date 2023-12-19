@@ -41,8 +41,8 @@ async def rag_with_typesense(user_input):
     extract_search_queries = await run_query_async(user_input)
     durations['generate_searches'] = timeit.default_timer() - start
 
-    print(f'generated queries:')
-    pp.pprint(extract_search_queries)
+    # print(f'generated queries:')
+    # pp.pprint(extract_search_queries)
 
     start = timeit.default_timer()
 
