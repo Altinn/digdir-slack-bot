@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "Altinn Assistent"
+name = "Altinn Assistant"
 version = "0.1.0"
 description = ""
 authors = ["Open Source contributors"]

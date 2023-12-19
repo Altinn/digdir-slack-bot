@@ -7,7 +7,7 @@ name: Build and deploy Python app to Azure Web App - digdir-slack-bot
 on:
   push:
     branches:
-      - main
+      - release
   workflow_dispatch:
 
 jobs:
