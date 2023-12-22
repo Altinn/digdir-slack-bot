@@ -1,3 +1,4 @@
+import os
 import pprint
 import typesense
 # from sentence_transformers import SentenceTransformer
@@ -17,7 +18,7 @@ async def typesense_search_multiple(search_queries: GeneratedSearchQueries):
         "searches":
             [
                 {
-                    "collection": cfg.DOCS_COLLECTION,
+                    "collection": os.environ.get("TYPESENSE_DOCS_COLLECTION"),
                     "q": query,
                     "query_by":"content,embedding",
                     "include_fields":"hierarchy.lvl0,hierarchy.lvl1,hierarchy.lvl2,hierarchy.lvl3,hierarchy.lvl4,url_without_anchor,type,id,content_markdown",
@@ -44,7 +45,7 @@ async def lookup_search_phrases_similar(search_queries: GeneratedSearchQueries):
         "searches":
             [
                 {
-                    "collection": cfg.DOCS_SEARCH_PHRASE_COLLECTION,
+                    "collection": os.environ.get("TYPESENSE_DOCS_SEARCH_PHRASE_COLLECTION"),
                     "q": query,
                     "query_by": "search_phrase,phrase_vec",
                     "include_fields": "search_phrase,url",
@@ -111,7 +112,7 @@ async def typesense_search_multiple_vector(search_queries: GeneratedSearchQuerie
         "searches":
             [
                 {
-                    "collection": cfg.DOCS_COLLECTION,
+                    "collection": os.environ.get("TYPESENSE_DOCS_COLLECTION"),
                     "q": "*",
                     "vector_query": f"embedding:([{','.join(str(v) for v in query)}], k:10)",
                     "include_fields":"hierarchy.lvl0,hierarchy.lvl1,hierarchy.lvl2,hierarchy.lvl3,hierarchy.lvl4,url_without_anchor,type,id,content_markdown",
@@ -132,7 +133,7 @@ async def typesense_retrieve_all_urls(page, page_size):
         "searches":
             [
                 {
-                    "collection": cfg.DOCS_COLLECTION,                
+                    "collection": os.environ.get("TYPESENSE_DOCS_COLLECTION"),                
                     "q": "*",
                     "query_by":"url_without_anchor",
                     "include_fields":"url_without_anchor,content_markdown,id",
@@ -157,7 +158,7 @@ async def typesense_retrieve_all_by_url(url_list):
 
     url_searchs = [
         {
-            "collection": cfg.DOCS_COLLECTION,             
+            "collection": os.environ.get("TYPESENSE_DOCS_COLLECTION"),             
             "q": ranked_url['url'],
             "query_by":"url_without_anchor",
             "include_fields":"hierarchy.lvl0,hierarchy.lvl1,hierarchy.lvl2,hierarchy.lvl3,hierarchy.lvl4,url_without_anchor,type,id,content_markdown",
@@ -207,7 +208,7 @@ async def lookup_search_phrases(url, collection_name: str):
 
     client = typesense.Client(cfg.TYPESENSE_CONFIG)
     if collection_name == None:
-        collection_name = cfg.DOCS_SEARCH_PHRASE_COLLECTION
+        collection_name = os.environ.get("TYPESENSE_DOCS_SEARCH_PHRASE_COLLECTION", '')
 
     multi_search_args = {
         "searches":

@@ -19,5 +19,3 @@ TYPESENSE_CONFIG:
     port: '443'
     protocol: 'https'
   connection_timeout_seconds': 2
-DOCS_COLLECTION: 'altinn-studio-docs'
-DOCS_SEARCH_PHRASE_COLLECTION: 'altinn-studio-docs-search-phrases'

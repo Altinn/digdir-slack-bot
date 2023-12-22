@@ -35,7 +35,7 @@ async def run(collection_name_tmp):
     client = typesense.Client(cfg.TYPESENSE_CONFIG)
 
     if collection_name_tmp == None or len(collection_name_tmp) == 0:
-        collection_name_tmp = f'{cfg.DOCS_SEARCH_PHRASE_COLLECTION}_{int(datetime.datetime.now().timestamp())}'
+        collection_name_tmp = f'{os.environ.get("TYPESENSE_DOCS_SEARCH_PHRASE_COLLECTION")}_{int(datetime.datetime.now().timestamp())}'
 
     search.setup_search_phrase_schema(collection_name_tmp)
 
@@ -160,7 +160,7 @@ async def run(collection_name_tmp):
 def commit_tmp_collection(client: typesense.Client, collection_name_tmp: str):
         """Update alias to point to new collection"""
         old_collection_name = None
-        alias_name = cfg.DOCS_SEARCH_PHRASE_COLLECTION
+        alias_name = os.environ.get("TYPESENSE_DOCS_SEARCH_PHRASE_COLLECTION", '')
 
         try:
             old_collection_name = client.aliases[alias_name].retrieve()['collection_name']
