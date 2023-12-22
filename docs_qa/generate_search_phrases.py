@@ -1,5 +1,5 @@
 import os
-import box
+import time
 import timeit
 import yaml
 import pprint
@@ -29,6 +29,50 @@ class RagPromptReply(BaseModel):
     """Relevant context data"""
     search_phrases: Sequence[RagContextRefs] = Field(..., description="List of generated search phrases.")
 
+async def lookup_search_phrases(url, collection_name_tmp):
+    retry_count = 0
+
+    while True:
+        try:
+            lookup_results = await search.lookup_search_phrases(url, collection_name_tmp)
+            existing_phrases = lookup_results["results"][0]
+            return existing_phrases
+        except Exception as e:
+            print(f'Exception occured while lookup up search phrases for url: {url}\n Error: {e}')            
+            if retry_count < 10:
+                pass
+                retry_count += 1
+                time.sleep(5)
+                continue
+            else: 
+                raise
+    
+async def generate_search_phrases(search_hit):
+    retry_count = 0
+
+    while True:
+        try:
+            llm = build_llm()
+            prompt = ChatPromptTemplate.from_messages(
+                    [('system', 'You are a helpful assistant.'),
+                    ('human',  generate_search_phrases_template)]
+                )
+
+            runnable = create_structured_output_chain(RagPromptReply, llm, prompt)
+            result = runnable.invoke({
+                "document": yaml.dump(search_hit.get('content_markdown',''))
+            })
+            return result
+        except Exception as e:
+            print(f'Exception occured while generating search phrases for url: {search_hit.get("url", "")}\n Error: {e}')            
+            if retry_count < 10:
+                pass
+                retry_count += 1
+                time.sleep(5)
+                continue
+            else:
+                raise
+
 
 async def run(collection_name_tmp):
 
@@ -48,9 +92,6 @@ async def run(collection_name_tmp):
     page = 1
     page_size = 10
 
-    # Convert search phrases to vectors using all-MiniLM-L12-v2
-    # model = SentenceTransformer("sentence-transformers/all-MiniLM-L12-v2")
-
     total_start = start = timeit.default_timer()
 
     while True:
@@ -67,7 +108,7 @@ async def run(collection_name_tmp):
             {
                 'id': document['document']['id'],
                 'url': document['document']['url_without_anchor'],
-                'content_markdown': document['document']['content_markdown'],
+                'content_markdown': document['document'].get('content_markdown', ''),
             }
             for result in search_response['results']
             for hit in result['grouped_hits']
@@ -92,29 +133,21 @@ async def run(collection_name_tmp):
         while doc_index < len(search_hits):        
             search_hit = search_hits[doc_index]
             url = search_hit.get("url", "")
-            doc_index += 1
-            lookup_results = await search.lookup_search_phrases(url, collection_name_tmp)
-            existing_phrases = lookup_results["results"][0]
 
+            existing_phrases = await lookup_search_phrases(url, collection_name_tmp)
             # pp.pprint(existing_phrases)
 
             if existing_phrases.get('found', 0) > 0:
-                print(f'Found existing phrases, skipping for url: {url}')                
+                print(f'Found existing phrases, skipping for url: {url}')            
+                doc_index += 1    
                 continue
 
             print(f'Generating search phrases for url: {url}')
             
             start = timeit.default_timer()
-            llm = build_llm()
-            prompt = ChatPromptTemplate.from_messages(
-                    [('system', 'You are a helpful assistant.'),
-                    ('human',  generate_search_phrases_template)]
-                )
 
-            runnable = create_structured_output_chain(RagPromptReply, llm, prompt)
-            result = runnable.invoke({
-                "document": yaml.dump(search_hit.get('content_markdown',''))
-            })
+            result = await generate_search_phrases(search_hit)
+
             durations['generate_phrases'] += timeit.default_timer() - start
             durations['total'] += timeit.default_timer() - total_start
 
@@ -148,11 +181,15 @@ async def run(collection_name_tmp):
             results = client.collections[collection_name_tmp].documents.import_(upload_batch, {'action': 'upsert', 'return_id': True})
             failed_results = [result for result in results if not result['success']]
             if len(failed_results) > 0:
-                print(f'The following search_phrases were not successfully upserted to typesense:\n{failed_results}')
+                print(f'The following search_phrases for url:\n  \"{url}\"\n were not successfully upserted to typesense:\n{failed_results}')
+            
+            doc_index += 1
+            # end while
             
         page += 1
 
     
+    commit_tmp_collection(client, collection_name_tmp)
 
     return None
 
