@@ -117,7 +117,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     except openai.error.ServiceUnavailableError as e:
         rag_with_typesense_error = f"OpenAI API error: {e}"
     except Exception as ex:
-        rag_with_typesense_error = f"Error: {e}"
+        rag_with_typesense_error = f"Error: {ex}"
 
 
     if rag_with_typesense_error:
