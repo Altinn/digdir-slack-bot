@@ -75,7 +75,7 @@ async def rag_with_typesense(user_input):
             'id': document['document']['id'],
             'url': document['document']['url_without_anchor'],
             'lvl0': document['document']['hierarchy.lvl0'],
-            'content_markdown': document['document']['content_markdown'],
+            'content_markdown': document['document'].get('content_markdown', ''),
         }
         for result in search_response['results']
         for hit in result['grouped_hits']
