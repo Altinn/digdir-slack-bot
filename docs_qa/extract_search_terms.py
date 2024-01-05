@@ -1,13 +1,8 @@
-import box
-import yaml
 import os
 import openai
 import instructor
 from pydantic import BaseModel, Field
 import pprint
-from .config import config
-
-cfg = config()
 
 instructor.patch()
 openai.api_type = 'azure'
