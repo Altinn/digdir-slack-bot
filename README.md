@@ -11,7 +11,32 @@ The main data sources on the evaluation list include:
 - Slack conversation history related to developer support
 
 
+## Quickstart
+
+
+### Install dependencies:  
+
+`poetry install`
+
+### Run `docs_qa` bot: 
+
+`poetry run python main.py docs "<your question>"`
+
+### Start Slack bot
+
+To start the Slack bot endpoint, launch the terminal from the project directory and run the following command:
+
+`poetry run python bolt.py`
+
+Note: in order for your local bot endpoint to receive traffic from Slack, you need to configure a proxy service such as `ngrok`, and configure a Slack app to use the URL allocated by ngrok.
+<br>
+
+
+# How it works
+
 ## RAG concepts
+
+TODO: 
 
 _add description and background references here_
 
@@ -56,16 +81,6 @@ poetry run python3 code_qa/update_summaries.py <path_to>/needs-summary-update.tx
 
 
 
-## Quickstart
-- Check that you have the GGML binary file from https://huggingface.co/TheBloke/Llama-2-7B-Chat-GGML and placed it into the `models/` folder
-- install dependencies:
-`poetry install`
-- To start the Slack bot endpoint, launch the terminal from the project directory and run the following command:
-`poetry run python3 bolt.py`
-- For example, `poetry run python3 main.py docs "How can I add a new text field to my data model?"`
-<br><br>
-
-___
 
 ## Indexing Altinn Studio Docs
 
