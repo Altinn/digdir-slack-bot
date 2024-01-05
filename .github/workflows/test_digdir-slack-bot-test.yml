@@ -20,24 +20,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  # free-disk-space:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Free Disk Space (Ubuntu)
-  #       uses: jlumbroso/free-disk-space@main
-  #       with:
-  #         # this might remove tools that are actually needed,
-  #         # if set to "true" but frees about 6 GB
-  #         tool-cache: false
-          
-  #         # all of these default to true, but feel free to set to
-  #         # "false" if necessary for your workflow
-  #         android: true
-  #         dotnet: true
-  #         haskell: true
-  #         large-packages: true
-  #         docker-images: true
-  #         swap-storage: true
   build:
     runs-on: ubuntu-latest
 
@@ -48,6 +30,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+
       - name: Install poetry
         run: |
           pip install poetry --upgrade
@@ -56,7 +39,7 @@ jobs:
         run: |
           poetry install --no-root
           
-        # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
+      # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
         
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
@@ -82,7 +65,7 @@ jobs:
 
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
-        uses: azure/webapps-deploy@85270a1854658d167ab239bce43949edb336fa7c
+        uses: azure/webapps-deploy@71170cb4a9b5a96321ed44dde00564dcf35d6643
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'production'
