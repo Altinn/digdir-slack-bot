@@ -50,21 +50,13 @@ async def rag_with_typesense(user_input):
     durations['generate_searches'] = timeit.default_timer() - start
 
     print(f'Query language code: {extract_search_queries.userInputLanguage}')
-
-    # print(f'generated queries:')
-    # pp.pprint(extract_search_queries)
-
-    # start = timeit.default_timer()
-    # search_response = await search.typesense_search_multiple(extract_search_queries)
-    # durations['execute_searches'] = timeit.default_timer() - start
-
     
     start = timeit.default_timer()
     search_phrase_hits = await search.lookup_search_phrases_similar(extract_search_queries)
     durations['phrase_similarity_search'] = timeit.default_timer() - start
 
-    print(f'url list:')
-    pp.pprint(search_phrase_hits)
+    # print(f'url list:')
+    # pp.pprint(search_phrase_hits)
 
     start = timeit.default_timer()
     search_response = await search.typesense_retrieve_all_by_url(search_phrase_hits)

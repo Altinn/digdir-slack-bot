@@ -16,10 +16,8 @@ chain_name = "[docs]"
 
 
 async def run_bot_async(app, hitl_config, say, msg_body, text):
-    src_evt_context = slack_utils.get_event_context(msg_body)
 
-    print(f"src_msg_metadata: ")
-    pp.pprint(src_evt_context)
+    src_evt_context = slack_utils.get_event_context(msg_body)
 
     main_channel_id = msg_body.get("event").get("channel")
     target_channel_id = main_channel_id
@@ -40,7 +38,6 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     # categorize message, respond to messages of type '[Support Request]'
     categorize_response = await run_channel_msg_categorize(text)
     message_category = categorize_response["text"]
-    print(f"Message category: {message_category}")
 
     bot_log(
         BotLogEntry(
