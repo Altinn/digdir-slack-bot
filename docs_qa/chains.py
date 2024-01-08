@@ -3,7 +3,6 @@ import yaml
 import os
 import openai
 import instructor
-from pydantic import BaseModel, Field
 import pprint
 from utils.openai_utils import json_gpt
 

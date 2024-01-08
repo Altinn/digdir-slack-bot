@@ -1,7 +1,6 @@
 import json
 import pprint
 
-from slack_sdk.errors import SlackApiError
 import openai.error
 
 from docs_qa.rag_manual_stuff import rag_with_typesense
