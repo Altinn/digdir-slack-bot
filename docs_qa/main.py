@@ -3,7 +3,6 @@ import pprint
 
 from slack_sdk.errors import SlackApiError
 import openai.error
-import utils.slack_utils as slack_utils
 
 from docs_qa.rag_manual_stuff import rag_with_typesense
 from channel_msg_categorize.run_chain import (
