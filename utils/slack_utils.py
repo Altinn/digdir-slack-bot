@@ -2,16 +2,16 @@ from slack_sdk.errors import SlackApiError
 import datetime
 import pytz
 from dataclasses import dataclass
-
+from typing import Optional
 
 @dataclass
 class SlackContext:
     ts: str
-    thread_ts: str
+    thread_ts: Optional[str]
     channel: str
-    team: str
-    user: str
-    time_utc: str
+    team: Optional[str]
+    user: Optional[str]
+    time_utc: Optional[str]
 
 
 def get_event_context(msg_body) -> SlackContext:
