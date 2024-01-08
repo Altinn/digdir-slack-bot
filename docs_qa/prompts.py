@@ -14,8 +14,11 @@ Context: {context}
 
 Question: {question}
 
-Only return the helpful answer below, along with relevant source code examples when possible.
-Helpful answer:
+First, answer the question in English, including relevant source code examples when possible.
+
+Finally, translate your helpful answer to "Norwegian Nynorsk".
+
+Helpful answer in English:
 """
 
 generate_search_phrases_template = """Please analyze the contents of the following documentation article and generate a list of English phrases that you would expect to match the following document. 

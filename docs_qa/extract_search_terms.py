@@ -14,6 +14,7 @@ openai.api_version = os.environ['AZURE_OPENAI_VERSION']
 class GeneratedSearchQueries(BaseModel):
     searchQueries: list[str] = Field(..., description="Array of search queries.")
     userInputLanguage: str = Field(..., description="ISO 639-1 language code for the original question")
+    questionTranslatedToEnglish: str = Field(..., description="The user's question, translated to English")
 
 pp = pprint.PrettyPrinter(indent=2)
 

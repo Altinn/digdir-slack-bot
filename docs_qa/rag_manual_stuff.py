@@ -34,6 +34,7 @@ class RagPromptReply(BaseModel):
     helpful_answer: str = Field(..., description="The helpful answer")
     i_dont_know: bool = Field(..., description="True when unable to answer based on the given context.")
     relevant_contexts: Sequence[RagContextRefs] = Field(..., description="List of context documents that were relevant when answering the question.")
+    translatedAnswer: str = Field(..., description="The translated answer")
 
 
 
@@ -50,6 +51,7 @@ async def rag_with_typesense(user_input):
     durations['generate_searches'] = timeit.default_timer() - start
 
     print(f'Query language code: {extract_search_queries.userInputLanguage}')
+    print(f'User query, translated to English: {extract_search_queries.questionTranslatedToEnglish}')
     
     start = timeit.default_timer()
     search_phrase_hits = await search.lookup_search_phrases_similar(extract_search_queries)
@@ -171,8 +173,10 @@ async def rag_with_typesense(user_input):
         # rag_success = None
 
     response = {
-        'result': result['function'].helpful_answer,        
+        'english_answer': result['function'].helpful_answer,
+        'result': result['function'].translatedAnswer,
         'input_language': extract_search_queries.userInputLanguage,
+        'translated_input': extract_search_queries.questionTranslatedToEnglish,
         'rag_success': rag_success,
         'search_queries': extract_search_queries.searchQueries,
         'source_urls': loaded_urls,

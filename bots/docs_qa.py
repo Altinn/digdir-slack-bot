@@ -64,8 +64,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         if hitl_enabled
         else f""
     )
-    quoted_input = text.replace("\n", "\n>")
-
+    
     if hitl_enabled:
         startMsg = app.client.chat_postMessage(
             text=first_message_text,
