@@ -40,10 +40,20 @@ async def main(text):
         print(rag_with_typesense_error)
         return
 
-    answer = rag_response["result"]
-    relevant_sources = rag_response["relevant_urls"]
 
-    print(f'Answer:\n{answer}\n')
+    # print results
+    print(f"""rag_with_typesense response:
+          
+\"english_answer\": 
+{rag_response.get('english_answer', '')}
+
+User query language code: \'{rag_response.get('user_query_language_code')}\', name: \'{rag_response.get('user_query_language_name')}\'
+\"translated_answer\": 
+{rag_response.get('translated_answer', '')}
+
+""")
+    
+    relevant_sources = rag_response["relevant_urls"]
 
     if len(relevant_sources) > 0:
         links_summary = "\n".join(
