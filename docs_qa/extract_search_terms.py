@@ -13,7 +13,9 @@ openai.api_version = os.environ['AZURE_OPENAI_VERSION']
 
 class GeneratedSearchQueries(BaseModel):
     searchQueries: list[str] = Field(..., description="Array of search queries.")
-    userInputLanguage: str = Field(..., description="ISO 639-1 language code for the original question")
+    userInputLanguageCode: str = Field(..., description="ISO 639-1 language code for the user query")
+    userInputLanguageName: str = Field(..., description="ISO 639-1 language name for the user query")
+    questionTranslatedToEnglish: str = Field(..., description="The user's question, translated to English")
 
 pp = pprint.PrettyPrinter(indent=2)
 
@@ -35,7 +37,7 @@ async def run_query_async(user_input) -> GeneratedSearchQueries:
 Include as many queries as you can think of, including and excluding terms.
 For example, include queries like ['keyword_1 keyword_2', 'keyword_1', 'keyword_2'].
 Be creative. The more queries you include, the more likely you are to find relevant results."""},
-            {"role": "user", "content": user_input},
+            {"role": "user", "content": "[User query]\n" + user_input},
         ]
     )
 

@@ -11,6 +11,7 @@ from langchain.chains.openai_functions import (
 from docs_qa.llm import build_llm
 from docs_qa.prompts import qa_template
 from docs_qa.extract_search_terms import run_query_async
+from docs_qa.translate_answer import translate_to_language
 import docs_qa.typesense_search as search
 from typing import Sequence
 from .config import config
@@ -34,6 +35,7 @@ class RagPromptReply(BaseModel):
     helpful_answer: str = Field(..., description="The helpful answer")
     i_dont_know: bool = Field(..., description="True when unable to answer based on the given context.")
     relevant_contexts: Sequence[RagContextRefs] = Field(..., description="List of context documents that were relevant when answering the question.")
+    translated_answer: str = Field(..., description="The translated answer")
 
 
 
@@ -49,7 +51,8 @@ async def rag_with_typesense(user_input):
     extract_search_queries = await run_query_async(user_input)
     durations['generate_searches'] = timeit.default_timer() - start
 
-    print(f'Query language code: {extract_search_queries.userInputLanguage}')
+    # print(f'Query language code: \'{extract_search_queries.userInputLanguageCode}\', name: \'{extract_search_queries.userInputLanguageName}\'')
+    # print(f'User query, translated to English: {extract_search_queries.questionTranslatedToEnglish}')
     
     start = timeit.default_timer()
     search_phrase_hits = await search.lookup_search_phrases_similar(extract_search_queries)
@@ -134,7 +137,7 @@ async def rag_with_typesense(user_input):
 
     durations['download_docs'] = timeit.default_timer() - start
 
-    print(f'stuffed source document urls:')
+    # print(f'stuffed source document urls:')
     # pp.pprint(loaded_urls)
 
     print(f'Starting RAG structured output chain, llm: {cfg.MODEL_TYPE}')
@@ -143,7 +146,7 @@ async def rag_with_typesense(user_input):
     llm = build_llm()
     prompt = ChatPromptTemplate.from_messages(
             [('system', 'You are a helpful assistant.'),
-             ('human',  qa_template)]
+             ('human',  qa_template(extract_search_queries.userInputLanguageName))]
         )
 
     runnable = create_structured_output_chain(RagPromptReply, llm, prompt)
@@ -152,7 +155,6 @@ async def rag_with_typesense(user_input):
         "question": user_input
     })
     durations['rag_query'] = timeit.default_timer() - start
-    durations['total'] = timeit.default_timer() - total_start
 
     # print(f"Time to run RAG structured output chain: {chain_end - chain_start} seconds")
 
@@ -170,9 +172,28 @@ async def rag_with_typesense(user_input):
         relevant_sources = []
         # rag_success = None
 
+    start = timeit.default_timer()
+    
+    if rag_success and extract_search_queries.userInputLanguageCode != 'en':
+        # translate if necessary
+        translated_answer = await translate_to_language(result['function'].helpful_answer, extract_search_queries.userInputLanguageName)
+    else:
+        translated_answer = result['function'].helpful_answer
+
+    # translated_answer = result['function'].translated_answer
+
+    durations['translation'] = timeit.default_timer() - start
+
+    durations['total'] = timeit.default_timer() - total_start
+
+
     response = {
-        'result': result['function'].helpful_answer,        
-        'input_language': extract_search_queries.userInputLanguage,
+        'original_user_query': user_input,
+        'english_user_query': extract_search_queries.questionTranslatedToEnglish,
+        'user_query_language_code': extract_search_queries.userInputLanguageCode,
+        'user_query_language_name': extract_search_queries.userInputLanguageName,
+        'english_answer': result['function'].helpful_answer,
+        'translated_answer': translated_answer,
         'rag_success': rag_success,
         'search_queries': extract_search_queries.searchQueries,
         'source_urls': loaded_urls,
