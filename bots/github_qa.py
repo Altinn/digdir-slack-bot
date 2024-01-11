@@ -2,7 +2,7 @@ import json
 import pprint
 
 from slack_sdk.errors import SlackApiError
-import openai.error
+import openai
 import utils.slack_utils as slack_utils
 from bots.structured_log import bot_log, BotLogEntry
 from github_qa.rag_issues import rag_with_typesense
@@ -119,22 +119,20 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
                 payload=payload,
             )
         )
-    except openai.error.ServiceUnavailableError as e:
-        print(f"OpenAI API error: {e}")
-        app.client.chat_postMessage(
-            thread_ts=thread_ts,
-            text=f"OpenAI API error: {e}",
-            channel=target_channel_id,
-        )
+
+    except openai.APIConnectionError as e:
+        rag_with_typesense_error = f"Azure OpenAI error: {e}"
+    except openai.RateLimitError as e:
+        rag_with_typesense_error = f"Azure OpenAI service is busy right now, let's try again"
+    except openai.APIStatusError as e:
+        rag_with_typesense_error = f"Azure OpenAI API error: {e}"
+    except Exception as ex:
+        rag_with_typesense_error = f"Error: {ex}"
+
+    if rag_with_typesense_error:
+        print(rag_with_typesense_error)
         return
-    except Exception as e:
-        print(f"Error: {e}")
-        app.client.chat_postMessage(
-            thread_ts=thread_ts,
-            text=f"Error: {e}",
-            channel=target_channel_id,
-        )
-        return
+
 
     answer = rag_response["result"]
     relevant_sources = rag_response["relevant_urls"]

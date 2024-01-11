@@ -153,7 +153,7 @@ async def rag_with_typesense(user_input):
     runnable = create_structured_output_chain(RagPromptReply, llm, prompt)
     result = runnable.invoke({
         "context": yaml.dump(loaded_docs),
-        "question": user_input
+        "question": extract_search_queries.questionTranslatedToEnglish
     })
 
 
@@ -178,17 +178,15 @@ async def rag_with_typesense(user_input):
     start = timeit.default_timer()
     
     # perhaps move this to a config flag
+    translated_answer = result['function'].helpful_answer
+
     translation_enabled = True
 
-    if translation_enabled:
-        # translate if necessary
-        if rag_success and extract_search_queries.userInputLanguageCode != 'en':
-            translated_answer = await translate_to_language(result['function'].helpful_answer, extract_search_queries.userInputLanguageName)
-        else:
-            translated_answer = result['function'].helpful_answer
-    else:
-        translated_answer = result['function'].translated_answer
-
+    # translate if necessary
+    if translation_enabled and rag_success and  extract_search_queries.userInputLanguageCode != 'en':
+        translated_answer = await translate_to_language(
+            result['function'].helpful_answer, extract_search_queries.userInputLanguageName)
+    
     durations['translation'] = timeit.default_timer() - start
     durations['total'] = timeit.default_timer() - total_start
 
