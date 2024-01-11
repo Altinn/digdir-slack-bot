@@ -11,7 +11,7 @@ from langchain.prompts import ChatPromptTemplate
 from langchain.chains.openai_functions import (
     create_structured_output_chain
 )
-from docs_qa.chains import build_llm
+from docs_qa.llm import build_llm
 from docs_qa.prompts import generate_search_phrases_template
 import docs_qa.typesense_search as search
 from typing import Sequence
