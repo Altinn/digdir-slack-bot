@@ -1,18 +1,19 @@
 import os
-import openai
+from openai import AzureOpenAI
 import pprint
 
-openai.api_type = 'azure'
-openai.api_key = os.environ['OPENAI_API_KEY_ALTINN3_DEV']
-openai.api_base = os.environ['OPENAI_API_URL_ALTINN3_DEV']
-openai.api_version = os.environ['AZURE_OPENAI_VERSION']
 
 pp = pprint.PrettyPrinter(indent=2)
 
+llmClient = AzureOpenAI(
+    azure_endpoint = os.environ['OPENAI_API_URL_ALTINN3_DEV'],
+    api_key = os.environ['OPENAI_API_KEY_ALTINN3_DEV'],
+    api_version = os.environ['AZURE_OPENAI_VERSION']
+)
 
 async def translate_to_language(text_to_translate, target_language_name) -> str:    
-    query_result = openai.ChatCompletion.create(
-        engine=os.environ['AZURE_OPENAI_DEPLOYMENT'],
+    query_result = llmClient.chat.completions.create(
+        model=os.environ['AZURE_OPENAI_DEPLOYMENT'],
         temperature=0.1,
         messages=[
             {
@@ -26,4 +27,4 @@ async def translate_to_language(text_to_translate, target_language_name) -> str:
         ])
     
     # Extract and return the assistant's reply
-    return query_result.choices[0].message['content']
+    return query_result.choices[0].message.content

@@ -143,17 +143,20 @@ async def rag_with_typesense(user_input):
     print(f'Starting RAG structured output chain, llm: {cfg.MODEL_TYPE}')
     
     start = timeit.default_timer()
-    llm = build_llm()
+    llm = build_llm(streaming=False)
     prompt = ChatPromptTemplate.from_messages(
             [('system', 'You are a helpful assistant.'),
              ('human',  qa_template(extract_search_queries.userInputLanguageName))]
         )
 
+
     runnable = create_structured_output_chain(RagPromptReply, llm, prompt)
     result = runnable.invoke({
         "context": yaml.dump(loaded_docs),
-        "question": user_input
+        "question": extract_search_queries.questionTranslatedToEnglish
     })
+
+
     durations['rag_query'] = timeit.default_timer() - start
 
     # print(f"Time to run RAG structured output chain: {chain_end - chain_start} seconds")
@@ -174,16 +177,17 @@ async def rag_with_typesense(user_input):
 
     start = timeit.default_timer()
     
-    if rag_success and extract_search_queries.userInputLanguageCode != 'en':
-        # translate if necessary
-        translated_answer = await translate_to_language(result['function'].helpful_answer, extract_search_queries.userInputLanguageName)
-    else:
-        translated_answer = result['function'].helpful_answer
+    # perhaps move this to a config flag
+    translated_answer = result['function'].helpful_answer
 
-    # translated_answer = result['function'].translated_answer
+    translation_enabled = True
 
+    # translate if necessary
+    if translation_enabled and rag_success and  extract_search_queries.userInputLanguageCode != 'en':
+        translated_answer = await translate_to_language(
+            result['function'].helpful_answer, extract_search_queries.userInputLanguageName)
+    
     durations['translation'] = timeit.default_timer() - start
-
     durations['total'] = timeit.default_timer() - total_start
 
 
