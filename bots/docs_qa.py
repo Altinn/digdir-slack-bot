@@ -1,6 +1,6 @@
 import json
 import pprint
-import bot_config 
+from bots.config import lookup_config 
 
 from slack_sdk.errors import SlackApiError
 import openai
@@ -19,6 +19,10 @@ chain_name = "[docs]"
 async def run_bot_async(app, hitl_config, say, msg_body, text):
 
     src_evt_context = slack_utils.get_event_context(msg_body)
+
+    enableDebugMessages = lookup_config(src_evt_context, 'enableDebugMessages', True)
+    print(f'enableDebugMessages: {enableDebugMessages}')
+
 
     main_channel_id = msg_body.get("event").get("channel")
     target_channel_id = main_channel_id
@@ -218,7 +222,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
 
     source_docs = rag_response["source_documents"]
     not_loaded_urls = rag_response["not_loaded_urls"]
-    table_blocks = []
+    debug_blocks = []
     fields_list = "*Retrieved articles*\n"
     not_loaded_list = ""
 
@@ -243,7 +247,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         )
 
     search_queries_summary = "\n> ".join(rag_response["search_queries"])
-    table_blocks.append(
+    debug_blocks.append(
         {
             "type": "section",
             "text": {
@@ -253,7 +257,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         }
     )
 
-    table_blocks.append(
+    debug_blocks.append(
         {
             "type": "section",
             "text": {
@@ -263,7 +267,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         }
     )
     if len(not_loaded_list) > 0:
-        table_blocks.append(
+        debug_blocks.append(
             {
                 "type": "section",
                 "text": {
@@ -273,7 +277,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
             }
         )
 
-    table_blocks.append(
+    debug_blocks.append(
         {
             "type": "section",
             "text": {
@@ -283,29 +287,11 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         }
     )
 
-    bot_config = bot_config.bot_config()
-
-    if bot_config.get("enableDebugMessages", True):
+    if enableDebugMessages:
         app.client.chat_postMessage(
             thread_ts=thread_ts,
-            text="Retrieved documentation:",
-            blocks=table_blocks,
+            text="Debug message",
+            blocks=debug_blocks,
             channel=target_channel_id,
         )
 
-    # TODO: add to channel config db table
-    if False:
-        say(
-            thread_ts=thread_ts,
-            channel=target_channel_id,
-            blocks=[
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": f"Processing times (sec):\n```\n{json.dumps(rag_response['durations'], indent=2)}```",
-                    },
-                }
-            ],
-            text=f"Processing times (sec): {rag_response['durations']['total']}",
-        )
