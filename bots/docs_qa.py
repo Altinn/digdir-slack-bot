@@ -1,5 +1,6 @@
 import json
 import pprint
+import bot_config 
 
 from slack_sdk.errors import SlackApiError
 import openai
@@ -282,8 +283,9 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         }
     )
 
-    # TODO: add to channel config db table
-    if True:
+    bot_config = bot_config.bot_config()
+
+    if bot_config.get("enableDebugMessages", True):
         app.client.chat_postMessage(
             thread_ts=thread_ts,
             text="Retrieved documentation:",

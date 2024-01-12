@@ -1,5 +1,6 @@
 import json
 import pprint
+from bots.bot_config import bot_config
 
 import openai
 
@@ -105,4 +106,5 @@ User query language code: \'{rag_response.get('user_query_language_code')}\', na
 
     print(json.dumps(rag_response['durations'], indent=2))
 
-    
+    enableDebugMessages = bot_config.get("enableDebugMessages", True)
+    print(f"enabeDebugMessages : {enableDebugMessages }" )
