@@ -33,6 +33,7 @@ ctransformers = "^0.2.27"
 pytz = "^2023.3.post1"
 supabase = "^2.0.1"
 langchain-openai = "^0.0.2.post1"
+ragatouille = "^0.0.4b1"
 
 [build-system]
 requires = ["poetry-core"]
