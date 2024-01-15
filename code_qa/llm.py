@@ -3,8 +3,8 @@
         Module: Open-source LLM Setup
 ===========================================
 '''
-from langchain.llms import CTransformers
-from langchain.chat_models import ChatOpenAI
+from langchain_community.llms import CTransformers
+from langchain_openai import ChatOpenAI
 from dotenv import find_dotenv, load_dotenv
 import box
 import yaml

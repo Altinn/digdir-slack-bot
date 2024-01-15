@@ -6,8 +6,8 @@
 import os
 from dotenv import find_dotenv, load_dotenv
 
-from langchain.llms import CTransformers
-from langchain.chat_models import ChatOpenAI
+from langchain_community.llms import CTransformers
+from langchain_openai import ChatOpenAI
 
 from .config_chain import config
 

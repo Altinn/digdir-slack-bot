@@ -6,7 +6,8 @@
 import os
 import pprint
 
-from langchain.chat_models import AzureChatOpenAI
+
+from langchain_openai import AzureChatOpenAI
 
 
 pp = pprint.PrettyPrinter(indent=2)

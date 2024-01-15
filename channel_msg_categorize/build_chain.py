@@ -5,8 +5,6 @@
 '''
 from langchain.prompts import PromptTemplate 
 from langchain.chains import LLMChain
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.vectorstores import FAISS
 from .prompts import categorize_new_message
 from .llm import build_llm
 from .config_chain import config
