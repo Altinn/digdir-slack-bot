@@ -1,5 +1,6 @@
 import json
 import pprint
+import timeit
 from bots.config import lookup_config 
 
 from slack_sdk.errors import SlackApiError
@@ -100,6 +101,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     rag_with_typesense_error = None
 
     try:
+        rag_start = timeit.default_timer()
         rag_response = await rag_with_typesense(text)
 
         payload = {
@@ -129,11 +131,33 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
 
 
     if rag_with_typesense_error:
+        # try to log the error, before letting the user know that something went wrong
+
+        print(f'\n\nERROR running rag_with_typesense: {rag_with_typesense_error}\n\n')
+
+        payload = {
+            "bot_name": "docs",
+            "original_user_query": text,
+            "error": rag_with_typesense_error,
+            "rag_success": False
+        }
+
+        bot_log(
+            BotLogEntry(
+                slack_context=slack_utils.get_context_from_thread_response(src_evt_context.ts, thread1),
+                elapsed_ms=slack_utils.time_s_to_ms(timeit.default_timer() - rag_start),
+                durations={},
+                step_name="rag_with_typesense",
+                payload=payload,
+            )
+        )
+
         app.client.chat_postMessage(
             thread_ts=thread_ts,
             text=rag_with_typesense_error,
             channel=target_channel_id,
         )
+
         return
 
     answer = rag_response.get('english_answer', '')
