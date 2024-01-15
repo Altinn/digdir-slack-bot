@@ -9,8 +9,8 @@ import os
 
 from langchain.prompts import PromptTemplate 
 from langchain.chains import RetrievalQA
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.vectorstores import FAISS
+from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_community.vectorstores import FAISS
 from code_qa.prompts import qa_template
 from code_qa.llm import build_llm
 

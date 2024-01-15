@@ -6,8 +6,8 @@
 import box
 import yaml
 import os
-from langchain.llms import CTransformers
-from langchain.chat_models import AzureChatOpenAI
+from langchain_community.llms import CTransformers
+from langchain_openai import AzureChatOpenAI
 from dotenv import find_dotenv, load_dotenv
 
 # Load environment variables from .env file

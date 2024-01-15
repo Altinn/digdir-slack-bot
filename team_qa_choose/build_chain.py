@@ -8,8 +8,8 @@ import yaml
 
 from langchain.prompts import PromptTemplate 
 from langchain.chains import LLMChain
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.vectorstores import FAISS
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
 from .prompts import choose_team_template
 from .llm import build_llm
 from .config_chain import config
