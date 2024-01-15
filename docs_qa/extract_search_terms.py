@@ -1,14 +1,8 @@
 import os
-import openai
+from openai import AzureOpenAI
 import instructor
 from pydantic import BaseModel, Field
 import pprint
-
-instructor.patch()
-openai.api_type = 'azure'
-openai.api_key = os.environ['OPENAI_API_KEY_ALTINN3_DEV']
-openai.api_base = os.environ['OPENAI_API_URL_ALTINN3_DEV']
-openai.api_version = os.environ['AZURE_OPENAI_VERSION']
 
 
 class GeneratedSearchQueries(BaseModel):
@@ -19,10 +13,16 @@ class GeneratedSearchQueries(BaseModel):
 
 pp = pprint.PrettyPrinter(indent=2)
 
+llmClient = instructor.patch(AzureOpenAI(
+    azure_endpoint = os.environ['OPENAI_API_URL_ALTINN3_DEV'],
+    api_key = os.environ['OPENAI_API_KEY_ALTINN3_DEV'],
+    api_version = os.environ['AZURE_OPENAI_VERSION']
+))
+
 
 async def run_query_async(user_input) -> GeneratedSearchQueries:    
-    query_result: GeneratedSearchQueries = openai.ChatCompletion.create(
-        engine=os.environ['AZURE_OPENAI_DEPLOYMENT'],
+    query_result: GeneratedSearchQueries = llmClient.chat.completions.create(
+        model=os.environ['AZURE_OPENAI_DEPLOYMENT'],
         response_model=GeneratedSearchQueries,
         temperature=0.1,
         messages=[

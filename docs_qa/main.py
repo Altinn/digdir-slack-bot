@@ -1,7 +1,6 @@
 import json
 import pprint
-
-import openai.error
+import openai
 
 from docs_qa.rag_manual_stuff import rag_with_typesense
 from channel_msg_categorize.run_chain import (
@@ -29,9 +28,13 @@ async def main(text):
     rag_with_typesense_error = None
 
     try:
-        rag_response = await rag_with_typesense(text)
-    except openai.error.ServiceUnavailableError as e:
-        rag_with_typesense_error = f"OpenAI API error: {e}"
+        rag_response = await rag_with_typesense(text)    
+    except openai.APIConnectionError as e:
+        rag_with_typesense_error = f"Azure OpenAI error: {e}"
+    except openai.RateLimitError as e:
+        rag_with_typesense_error = f"Azure OpenAI service is busy right now, let's try again"
+    except openai.APIStatusError as e:
+        rag_with_typesense_error = f"Azure OpenAI API error: {e}"
     except Exception as ex:
         rag_with_typesense_error = f"Error: {ex}"
 
@@ -94,12 +97,12 @@ User query language code: \'{rag_response.get('user_query_language_code')}\', na
     search_queries_summary = "\n> ".join(rag_response["search_queries"])
 
     print(f"Phrases generated for retrieval:\n> {search_queries_summary}")
-
-    print(f'*Retrieved articles*\n{fields_list}')
+    print(f'{fields_list}')
 
     if len(not_loaded_list) > 0:
         print(f"*Retrieved, but not used:*\n{not_loaded_list}")
 
     print(json.dumps(rag_response['durations'], indent=2))
 
-    
+    # enableDebugMessages = bot_config(SlackContext()).get("enableDebugMessages", True)
+    # print(f"enabeDebugMessages : {enableDebugMessages }" )

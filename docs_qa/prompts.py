@@ -35,7 +35,7 @@ Question: {question}
 
 """ + translate_hint + "\nHelpful answer:\n"
     
-    print(f'Prompt text:\n{prompt_text}')
+    # print(f'Prompt text:\n{prompt_text}')
     return prompt_text
 
 
