@@ -1,6 +1,7 @@
 import asyncio
 import argparse
 from docs_qa import generate_search_phrases
+from docs_qa.update_colbert_index import run as update_colbert_index
 from github_qa.sync_issues import main as sync_issues
 
 if __name__ == "__main__":
@@ -22,5 +23,7 @@ if __name__ == "__main__":
     elif args.job == 'sync_github_issues':
         sync_issues()
 
+    elif args.job == 'update_colbert_index':
+        asyncio.run(update_colbert_index())
     else:
         print(f'Unknown job name "{args.job}"')

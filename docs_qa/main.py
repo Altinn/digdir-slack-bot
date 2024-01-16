@@ -2,7 +2,7 @@ import json
 import pprint
 import openai
 
-from docs_qa.rag_manual_stuff import rag_with_typesense
+from docs_qa.rag_colbert import rag_with_colbert
 from channel_msg_categorize.run_chain import (
     run_chain_async as run_channel_msg_categorize,
 )
@@ -25,22 +25,22 @@ async def main(text):
 
     print("Reading Altinn Studio docs...")
 
-    rag_with_typesense_error = None
+    rag_error = None
 
     try:
-        rag_response = await rag_with_typesense(text)    
+        rag_response = await rag_with_colbert(text)    
     except openai.APIConnectionError as e:
-        rag_with_typesense_error = f"Azure OpenAI error: {e}"
+        rag_error = f"Azure OpenAI error: {e}"
     except openai.RateLimitError as e:
-        rag_with_typesense_error = f"Azure OpenAI service is busy right now, let's try again"
+        rag_error = f"Azure OpenAI service is busy right now, let's try again"
     except openai.APIStatusError as e:
-        rag_with_typesense_error = f"Azure OpenAI API error: {e}"
+        rag_error = f"Azure OpenAI API error: {e}"
     except Exception as ex:
-        rag_with_typesense_error = f"Error: {ex}"
+        rag_error = f"Error: {ex}"
 
 
-    if rag_with_typesense_error:
-        print(rag_with_typesense_error)
+    if rag_error:
+        print(rag_error)
         return
 
 
