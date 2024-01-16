@@ -2,7 +2,7 @@ import json
 import pprint
 import openai
 
-from docs_qa.rag_colbert import rag_with_colbert
+from docs_qa.rag_manual_colbert_rerank import rag_with_typesense
 from channel_msg_categorize.run_chain import (
     run_chain_async as run_channel_msg_categorize,
 )
@@ -28,7 +28,7 @@ async def main(text):
     rag_error = None
 
     try:
-        rag_response = await rag_with_colbert(text)    
+        rag_response = await rag_with_typesense(text)    
     except openai.APIConnectionError as e:
         rag_error = f"Azure OpenAI error: {e}"
     except openai.RateLimitError as e:
