@@ -8,6 +8,7 @@ from langchain.prompts import ChatPromptTemplate
 from langchain.chains.openai_functions import (
     create_structured_output_chain
 )
+from ragatouille import RAGPretrainedModel
 from docs_qa.llm import build_llm
 from docs_qa.prompts import qa_template
 from docs_qa.extract_search_terms import run_query_async
@@ -19,6 +20,8 @@ from .config import config
 pp = pprint.PrettyPrinter(indent=2)
 
 cfg = config()
+
+RAG = RAGPretrainedModel.from_pretrained("colbert-ir/colbertv2.0")
 
 
 # Import config vars
@@ -82,15 +85,49 @@ async def rag_with_typesense(user_input):
 
     start = timeit.default_timer()
 
+    all_urls = []
+    all_docs = []
     loaded_docs = []
     loaded_urls = []
     loaded_search_hits = []
     doc_index = 0
     docs_length = 0
 
+    # rerank results using ColBERT
+
+    # rerank - step 1 - load all documents in retrieval format
+    while doc_index < len(search_hits):        
+        search_hit = search_hits[doc_index]
+        doc_index += 1
+        unique_url = search_hit['url']
+
+        if unique_url in all_urls:
+            continue
+
+        doc_md = search_hit['content_markdown']
+        if len(doc_md) == 0:
+            continue
+
+        loaded_doc = {
+            'page_content': doc_md,
+            'metadata': {            
+                'source': unique_url,                                
+            }
+        }    
+        all_docs.append(loaded_doc)
+        all_urls.append(unique_url)
+
+    doc_index = 0
+
+    print(f'Reranking results...')
+    reranked_docs = RAG.rerank(user_input, all_docs, k=10)
+
+    for rrdoc in reranked_docs:
+        print(f'Doc url: {rrdoc["metadata"]["source"]}')
+
+
     # need to preserve order in documents list
     # should only append doc if context is not too big
-
 
     while doc_index < len(search_hits):        
         search_hit = search_hits[doc_index]
