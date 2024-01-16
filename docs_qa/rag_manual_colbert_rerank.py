@@ -26,7 +26,7 @@ cfg = config()
 with open('docs_qa/config/config.yml', 'r', encoding='utf8') as ymlfile:
     cfg = box.Box(yaml.safe_load(ymlfile))
 
-RAG = RAGPretrainedModel.from_index(".ragatouille/colbert/indexes/docs-altinn-studio-colbert")
+RAG = RAGPretrainedModel.from_pretrained("colbert-ir/colbertv2.0")
 
 
 
