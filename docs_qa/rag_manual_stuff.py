@@ -34,9 +34,7 @@ class RagPromptReply(BaseModel):
     """Relevant context data"""
     helpful_answer: str = Field(..., description="The helpful answer")
     i_dont_know: bool = Field(..., description="True when unable to answer based on the given context.")
-    relevant_contexts: Sequence[RagContextRefs] = Field(..., description="List of context documents that were relevant when answering the question.")
-    translated_answer: str = Field(..., description="The translated answer")
-
+    relevant_contexts: Sequence[RagContextRefs] = Field(..., description="List of context documents that were relevant when answering the question.")    
 
 
 async def rag_with_typesense(user_input):
