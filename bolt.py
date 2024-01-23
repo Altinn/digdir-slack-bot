@@ -15,10 +15,10 @@ from slack_sdk.errors import SlackApiError
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
 import utils.slack_utils as slack_utils
-from bots.choose_team import run_bot_async as bot_choose_team
+# from bots.choose_team import run_bot_async as bot_choose_team
 from bots.code_qa import run_bot_async as bot_code_qa
 from bots.docs_qa import run_bot_async as bot_docs_qa
-from bots.github_qa import run_bot_async as bot_github_qa
+# from bots.github_qa import run_bot_async as bot_github_qa
 from bots.structured_log import bot_log, update_reactions, BotLogEntry
 
 # Import config vars
@@ -86,6 +86,9 @@ def handle_message_events(ack, say, body, logger):
             elif not text.startswith("["):
                 bot_name = "docs"
                 
+            first_thread_ts = say(text="Thinking...", thread_ts=evt.get('ts'))
+
+
             entry = BotLogEntry(
                 slack_context= src_evt_context,
                 elapsed_ms= 0,
@@ -95,13 +98,13 @@ def handle_message_events(ack, say, body, logger):
             bot_log(entry)
 
             if bot_name == "docs":
-                asyncio.run(bot_docs_qa(app, hitl_config, say, body, clean_text))
+                asyncio.run(bot_docs_qa(app, hitl_config, say, body, clean_text, first_thread_ts))
             elif bot_name == "code":
                 asyncio.run(bot_code_qa(app, hitl_config, say, body, clean_text))
-            elif bot_name == "team":
-                asyncio.run(bot_choose_team(app, hitl_config, say, body, clean_text))
-            elif bot_name == "gh-issues":
-                asyncio.run(bot_github_qa(app, hitl_config, say, body, clean_text))
+            # elif bot_name == "team":
+            #     asyncio.run(bot_choose_team(app, hitl_config, say, body, clean_text))
+            # elif bot_name == "gh-issues":
+            #     asyncio.run(bot_github_qa(app, hitl_config, say, body, clean_text))
             elif not text.startswith("["):
                 asyncio.run(bot_docs_qa(app, hitl_config, say, body, clean_text))
             else:

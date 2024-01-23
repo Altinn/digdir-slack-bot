@@ -42,7 +42,7 @@ class RagPromptReply(BaseModel):
     
 
 
-async def rag_with_typesense(user_input):
+async def rag_with_typesense(user_input, user_query_language_name):
 
     durations = {
         'total': 0,
@@ -57,9 +57,7 @@ async def rag_with_typesense(user_input):
     extract_search_queries = await run_query_async(user_input)
     durations['generate_searches'] = round(timeit.default_timer() - start, 1)
 
-    # print(f'Query language code: \'{extract_search_queries.userInputLanguageCode}\', name: \'{extract_search_queries.userInputLanguageName}\'')
-    # print(f'User query, translated to English: {extract_search_queries.questionTranslatedToEnglish}')
-    
+
     start = timeit.default_timer()
     search_phrase_hits = await search.lookup_search_phrases_similar(extract_search_queries)
     durations['phrase_similarity_search'] = round(timeit.default_timer() - start, 1)
@@ -122,7 +120,7 @@ async def rag_with_typesense(user_input):
     # rerank results using ColBERT
     start = timeit.default_timer()
     content_original_rank = [
-        document['content_markdown']        
+        document['content_markdown'][:int(cfg.MAX_SOURCE_LENGTH / 3)]
         for document in search_hits
     ]
     reranked = RAG.rerank(query=user_input, documents=content_original_rank, k=10)
@@ -195,14 +193,14 @@ async def rag_with_typesense(user_input):
     llm = build_llm(streaming=False)
     prompt = ChatPromptTemplate.from_messages(
             [('system', 'You are a helpful assistant.'),
-             ('human',  qa_template(extract_search_queries.userInputLanguageName))]
+             ('human',  qa_template(user_query_language_name))]
         )
 
 
     runnable = create_structured_output_chain(RagPromptReply, llm, prompt)
     result = runnable.invoke({
         "context": yaml.dump(loaded_docs),
-        "question": extract_search_queries.questionTranslatedToEnglish
+        "question": user_input
     })
 
 
@@ -232,19 +230,17 @@ async def rag_with_typesense(user_input):
     translation_enabled = True
 
     # translate if necessary
-    if translation_enabled and rag_success and  extract_search_queries.userInputLanguageCode != 'en':
+    if translation_enabled and rag_success and  user_query_language_name != 'English':
         translated_answer = await translate_to_language(
-            result['function'].helpful_answer, extract_search_queries.userInputLanguageName)
+            result['function'].helpful_answer, user_query_language_name)
     
     durations['translation'] = round(timeit.default_timer() - start, 1)
     durations['total'] = round(timeit.default_timer() - total_start, 1)
 
 
     response = {
-        'original_user_query': user_input,
-        'english_user_query': extract_search_queries.questionTranslatedToEnglish,
-        'user_query_language_code': extract_search_queries.userInputLanguageCode,
-        'user_query_language_name': extract_search_queries.userInputLanguageName,
+        'english_user_query': user_input,
+        'user_query_language_name': user_query_language_name,
         'english_answer': result['function'].helpful_answer,
         'translated_answer': translated_answer,
         'rag_success': rag_success,
