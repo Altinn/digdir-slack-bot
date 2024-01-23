@@ -8,6 +8,7 @@ from langchain.prompts import ChatPromptTemplate
 from langchain.chains.openai_functions import (
     create_structured_output_chain
 )
+from ragatouille import RAGPretrainedModel
 from docs_qa.llm import build_llm
 from docs_qa.prompts import qa_template
 from docs_qa.extract_search_terms import run_query_async
@@ -25,6 +26,9 @@ cfg = config()
 with open('docs_qa/config/config.yml', 'r', encoding='utf8') as ymlfile:
     cfg = box.Box(yaml.safe_load(ymlfile))
 
+RAG = RAGPretrainedModel.from_pretrained("colbert-ir/colbertv2.0")
+
+
 
 class RagContextRefs(BaseModel):
     # relevant_content: str = Field(..., description="Three or four sentences from the most relevant parts of the context document")
@@ -34,34 +38,38 @@ class RagPromptReply(BaseModel):
     """Relevant context data"""
     helpful_answer: str = Field(..., description="The helpful answer")
     i_dont_know: bool = Field(..., description="True when unable to answer based on the given context.")
-    relevant_contexts: Sequence[RagContextRefs] = Field(..., description="List of context documents that were relevant when answering the question.")    
+    relevant_contexts: Sequence[RagContextRefs] = Field(..., description="List of context documents that were relevant when answering the question.")
+    
 
 
 async def rag_with_typesense(user_input):
 
     durations = {
+        'total': 0,
         'generate_searches': 0,
+        'execute_searches': 0,
         'phrase_similarity_search': 0,
+        'colbert_rerank': 0,
         'rag_query': 0,
-        'total': 0
+        'translation': 0,
     }
     total_start = start = timeit.default_timer()
     extract_search_queries = await run_query_async(user_input)
-    durations['generate_searches'] = timeit.default_timer() - start
+    durations['generate_searches'] = round(timeit.default_timer() - start, 1)
 
     # print(f'Query language code: \'{extract_search_queries.userInputLanguageCode}\', name: \'{extract_search_queries.userInputLanguageName}\'')
     # print(f'User query, translated to English: {extract_search_queries.questionTranslatedToEnglish}')
     
     start = timeit.default_timer()
     search_phrase_hits = await search.lookup_search_phrases_similar(extract_search_queries)
-    durations['phrase_similarity_search'] = timeit.default_timer() - start
+    durations['phrase_similarity_search'] = round(timeit.default_timer() - start, 1)
 
-    # print(f'url list:')
+    print(f'Search phrase hits found: {len(search_phrase_hits)}')
     # pp.pprint(search_phrase_hits)
 
     start = timeit.default_timer()
     search_response = await search.typesense_retrieve_all_by_url(search_phrase_hits)
-    durations['execute_searches'] = timeit.default_timer() - start
+    durations['execute_searches'] = round(timeit.default_timer() - start, 1)
 
     search_hits = [
         {
@@ -80,18 +88,62 @@ async def rag_with_typesense(user_input):
 
     start = timeit.default_timer()
 
+    all_urls = []
+    all_docs = []
     loaded_docs = []
     loaded_urls = []
     loaded_search_hits = []
     doc_index = 0
     docs_length = 0
 
-    # need to preserve order in documents list
-    # should only append doc if context is not too big
-
-
+    # make list of all markdown content
     while doc_index < len(search_hits):        
         search_hit = search_hits[doc_index]
+        doc_index += 1
+        unique_url = search_hit['url']
+
+        if unique_url in all_urls:
+            continue
+
+        doc_md = search_hit['content_markdown']
+        if len(doc_md) == 0:
+            continue
+
+        loaded_doc = {
+            'page_content': doc_md,
+            'metadata': {            
+                'source': unique_url,                                
+            }
+        }    
+        all_docs.append(loaded_doc)
+        all_urls.append(unique_url)
+
+
+    # rerank results using ColBERT
+    start = timeit.default_timer()
+    content_original_rank = [
+        document['content_markdown']        
+        for document in search_hits
+    ]
+    reranked = RAG.rerank(query=user_input, documents=content_original_rank, k=10)
+    durations['colbert_rerank'] = round(timeit.default_timer() - start, 1)
+
+    # print(f'ColBERT re-ranking results:')
+    # pp.pprint(reranked)
+
+    # re-order search-hits based on new ranking
+    search_hits_reranked = []
+    for r in reranked:
+        h = search_hits[r['result_index']]
+        search_hits_reranked.append(h)
+
+
+    # need to preserve order in documents list
+    # should only append doc if context is not too big
+    doc_index = 0
+
+    while doc_index < len(search_hits_reranked):        
+        search_hit = search_hits_reranked[doc_index]
         doc_index += 1
         unique_url = search_hit['url']
 
@@ -133,7 +185,6 @@ async def rag_with_typesense(user_input):
         if url not in loaded_urls and url not in not_loaded_urls:
             not_loaded_urls.append(url)
 
-    durations['download_docs'] = timeit.default_timer() - start
 
     # print(f'stuffed source document urls:')
     # pp.pprint(loaded_urls)
@@ -155,7 +206,7 @@ async def rag_with_typesense(user_input):
     })
 
 
-    durations['rag_query'] = timeit.default_timer() - start
+    durations['rag_query'] = round(timeit.default_timer() - start, 1)
 
     # print(f"Time to run RAG structured output chain: {chain_end - chain_start} seconds")
 
@@ -185,8 +236,8 @@ async def rag_with_typesense(user_input):
         translated_answer = await translate_to_language(
             result['function'].helpful_answer, extract_search_queries.userInputLanguageName)
     
-    durations['translation'] = timeit.default_timer() - start
-    durations['total'] = timeit.default_timer() - total_start
+    durations['translation'] = round(timeit.default_timer() - start, 1)
+    durations['total'] = round(timeit.default_timer() - total_start, 1)
 
 
     response = {

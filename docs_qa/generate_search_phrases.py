@@ -84,10 +84,10 @@ async def run(collection_name_tmp):
     search.setup_search_phrase_schema(collection_name_tmp)
 
     durations = {
+        'total': 0,
         'query_docs': 0,
         'generate_phrases': 0,
         'store_phrases': 0,
-        'total': 0
     }
     page = 1
     page_size = 10
@@ -149,7 +149,7 @@ async def run(collection_name_tmp):
             result = await generate_search_phrases(search_hit)
 
             durations['generate_phrases'] += timeit.default_timer() - start
-            durations['total'] += timeit.default_timer() - total_start
+            durations['total'] += round(timeit.default_timer() - total_start, 1)
 
             # print(f'runnable result:')
             # pp.pprint(result)

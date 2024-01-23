@@ -1,0 +1,43 @@
+name: Trigger auto deployment for digdir-slack-bot-test
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ docker-test ]
+    paths:
+    - '**'
+    - '.github/workflows/digdir-slack-bot-test-AutoDeployTrigger-afe2fee5-038e-4bc0-9f8f-1b0061f69853.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:
+      
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.DIGDIRSLACKBOTTEST_AZURE_CREDENTIALS }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          appSourcePath: ${{ github.workspace }} 
+          registryUrl: altinnaicontainers.azurecr.io
+          registryUsername: ${{ secrets.DIGDIRSLACKBOTTEST_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.DIGDIRSLACKBOTTEST_REGISTRY_PASSWORD }}
+          containerAppName: digdir-slack-bot-test
+          resourceGroup: altinn-ai-assistant
+          imageToBuild: altinnaicontainers.azurecr.io/altinn-assistant:${{ github.sha }}
+          
+            
+
+     
+

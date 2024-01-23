@@ -292,6 +292,9 @@ def open_modal(ack, shortcut, client, logger):
         logger.error("Error creating conversation: {}".format(e))
 
 
-if __name__ == "__main__":
-    app.start(port=int(os.environ.get("PORT", 3001)))
+def main():
+    app.start(port=int(os.environ.get("PORT", 3000)))
     SocketModeHandler(app, os.environ["SLACK_APP_TOKEN" + slack_bot_suffix]).start()
+
+if __name__ == "__main__":
+    main()
