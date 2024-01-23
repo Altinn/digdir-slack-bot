@@ -1,6 +1,5 @@
 import os
-import json
-import pprint
+import timeit
 from supabase import create_client, Client
 from utils.slack_utils import SlackContext
 
@@ -14,12 +13,17 @@ def lookup_config(slack_context : SlackContext, config_name: str, default_value)
     
     channel_id = slack_context.channel
 
+    start = timeit.default_timer()
     try:
         (data, count) = supabase.table('bot_config').select("*").execute()
     except Exception as supabase_ex:
         print(f'Supabase error occurred when attempting to log:\n{supabase_ex}')
         return default_value
     
+    duration = round(timeit.default_timer() - start, 1)
+    if duration > 0.1:
+        print(f'Took {duration} seconds to lookup config from db.')
+
     for row in data[1]:
 
         if channel_id == row.get('channel_id'):

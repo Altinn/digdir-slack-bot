@@ -1,11 +1,10 @@
 import json
 import pprint
 import openai
+import timeit
 
+from docs_qa.stage1_analyze import query as stage1_analyze
 from docs_qa.rag_manual_stuff import rag_with_typesense
-from channel_msg_categorize.run_chain import (
-    run_chain_async as run_channel_msg_categorize,
-)
 
 
 pp = pprint.PrettyPrinter(indent=2)
@@ -13,22 +12,42 @@ pp = pprint.PrettyPrinter(indent=2)
 async def main(text):
 
     # categorize message, respond to messages of type '[Support Request]'
-    categorize_response = await run_channel_msg_categorize(text)
-    message_category = categorize_response["text"]
+    start = timeit.default_timer()
+    stage1_result = await stage1_analyze(text)
+    duration = round(timeit.default_timer() - start, 1)
 
-    if message_category != "[Support Request]":
+#   english_user_query: {stage1_result.questionTranslatedToEnglish}
+    print(f"""stage1_result in {duration} seconds:
+  language_code: {stage1_result.userInputLanguageCode}
+  language_name: {stage1_result.userInputLanguageName}
+  original_user_query: {text}
+  content_category: {stage1_result.contentCategory}
+""")
+
+    return
+
+    message_category = stage1_result.contentCategory
+
+    if not "Support Request" in message_category:
         # we only handle support requests, so done
         print(
             f'Assistant does not know what to do with messages of category: "{message_category}"'
         )
         return
 
-    print("Reading Altinn Studio docs...")
+    busy_reading_msg = "Reading Altinn Studio docs..."
+
+    if stage1_result.userInputLanguageCode == 'no':
+        busy_reading_msg = "Leser relevante artikler fra Altinn Studio dokumentasjonen..."
+    elif stage1_result.userInputLanguageCode == 'nn':
+        busy_reading_msg = "Relevante artiklar frå Altinn Studio dokumentasjonen lesast..."
+    
+    print(busy_reading_msg)
 
     rag_error = None
 
     try:
-        rag_response = await rag_with_typesense(text)    
+        rag_response = await rag_with_typesense(text, stage1_result.userInputLanguageName)    
     except openai.APIConnectionError as e:
         rag_error = f"Azure OpenAI error: {e}"
     except openai.RateLimitError as e:
@@ -50,7 +69,6 @@ async def main(text):
 \"english_answer\": 
 {rag_response.get('english_answer', '')}
 
-User query language code: \'{rag_response.get('user_query_language_code')}\', name: \'{rag_response.get('user_query_language_name')}\'
 \"translated_answer\": 
 {rag_response.get('translated_answer', '')}
 

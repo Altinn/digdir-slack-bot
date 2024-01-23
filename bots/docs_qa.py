@@ -7,17 +7,16 @@ from slack_sdk.errors import SlackApiError
 import openai
 import utils.slack_utils as slack_utils
 from bots.structured_log import bot_log, BotLogEntry
+
+from docs_qa.stage1_analyze import query as stage1_analyze
 from docs_qa.rag_manual_stuff import rag_with_typesense
-from channel_msg_categorize.run_chain import (
-    run_chain_async as run_channel_msg_categorize,
-)
 
 
 pp = pprint.PrettyPrinter(indent=2)
 chain_name = "[docs]"
 
 
-async def run_bot_async(app, hitl_config, say, msg_body, text):
+async def run_bot_async(app, hitl_config, say, msg_body, text, first_thread_ts):
 
     src_evt_context = slack_utils.get_event_context(msg_body)
 
@@ -41,27 +40,31 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         f"hitl enabled: {hitl_enabled}, main_channel_id: {main_channel_id}, qa_channel_id: {qa_channel_id}"
     )
 
-    # categorize message, respond to messages of type '[Support Request]'
-    categorize_response = await run_channel_msg_categorize(text)
-    message_category = categorize_response["text"]
+    # categorize message, respond to messages of type 'Support Request'
+    start = timeit.default_timer()
+    stage1_result = await stage1_analyze(text)
+    stage1_duration = round(timeit.default_timer() - start, 1)
 
     bot_log(
         BotLogEntry(
             slack_context=src_evt_context,
-            elapsed_ms=slack_utils.time_s_to_ms(categorize_response["duration"]),
-            step_name="categorize_message",
+            elapsed_ms=slack_utils.time_s_to_ms(stage1_duration),
+            step_name="stage1_analyze",
             payload={
-                "user_input": text,
                 "bot_name": "docs",
-                "message_category": message_category,
+                "english_user_query": stage1_result.questionTranslatedToEnglish,
+                "original_user_query": text,
+                "user_query_language_code": stage1_result.userInputLanguageCode,
+                "user_query_language_name": stage1_result.userInputLanguageName,
+                "content_category": stage1_result.contentCategory,
             },
         )
     )
 
-    if message_category != "[Support Request]":
+    if not "Support Request" in stage1_result.contentCategory:
         # we only handle support requests, so done
         print(
-            f'Assistant does not know what to do with messages of category: "{message_category}"'
+            f'Assistant does not know what to do with messages of category: "{stage1_result.contentCategory}"'
         )
         return
 
@@ -89,20 +92,39 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
     else:
         thread_ts = src_evt_context.ts
 
+    busy_reading_msg = "Reading Altinn Studio docs..."
+
+    if stage1_result.userInputLanguageCode == 'no':
+        busy_reading_msg = "Søker gjennom dokumentasjonen..."
+    elif stage1_result.userInputLanguageCode == 'nn':
+        busy_reading_msg = "Altinn Studio dokumentasjon lesast..."
+    
+
     if hitl_enabled:
-        thread1 = app.client.chat_postMessage(
+        first_thread_ts = app.client.chat_postMessage(
             text=f"Running {chain_name} chain...",
             channel=qa_channel_id,
             thread_ts=thread_ts,
         )
     else:
-        thread1 = say(text="Reading Altinn Studio docs...", thread_ts=thread_ts)
+        if first_thread_ts != None:
+            try:
+                app.client.chat_update(
+                    channel=first_thread_ts["channel"],
+                    ts=first_thread_ts["ts"],
+                    text=busy_reading_msg,
+                    as_user=True,
+                )
+            except SlackApiError as e:
+                print(f"Error attempting to delete temp bot message {e}")
+        else:
+            first_thread_ts = say(text=busy_reading_msg, thread_ts=thread_ts)
 
     rag_with_typesense_error = None
 
     try:
         rag_start = timeit.default_timer()
-        rag_response = await rag_with_typesense(text)
+        rag_response = await rag_with_typesense(text, stage1_result.userInputLanguageName)
 
         payload = {
             "bot_name": "docs",
@@ -144,7 +166,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
 
         bot_log(
             BotLogEntry(
-                slack_context=slack_utils.get_context_from_thread_response(src_evt_context.ts, thread1),
+                slack_context=slack_utils.get_context_from_thread_response(src_evt_context.ts, first_thread_ts),
                 elapsed_ms=slack_utils.time_s_to_ms(timeit.default_timer() - rag_start),
                 durations={},
                 step_name="rag_with_typesense",
@@ -161,7 +183,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
         return
 
     answer = rag_response.get('english_answer', '')
-    if rag_response.get('user_query_language_code', 'en') != 'en':
+    if stage1_result.userInputLanguageCode != 'en':
         answer = rag_response["translated_answer"]
         
     relevant_sources = rag_response["relevant_urls"]
@@ -220,8 +242,8 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
 
     try:
         app.client.chat_update(
-            channel=thread1["channel"],
-            ts=thread1["ts"],
+            channel=first_thread_ts["channel"],
+            ts=first_thread_ts["ts"],
             text=reply_text,
             blocks=blocks,
             as_user=True,
@@ -233,7 +255,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text):
 
     bot_log(
         BotLogEntry(
-            slack_context=slack_utils.get_context_from_thread_response(src_evt_context.ts, thread1),
+            slack_context=slack_utils.get_context_from_thread_response(src_evt_context.ts, first_thread_ts),
             elapsed_ms=slack_utils.time_s_to_ms(rag_response["durations"]["total"]),
             durations=rag_response["durations"],
             step_name="rag_with_typesense",

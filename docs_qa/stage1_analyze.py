@@ -1,6 +1,6 @@
 '''
 ===========================================
-        Module: Chain functions
+        Module: Analyze user input
 ===========================================
 '''
 import os
@@ -9,8 +9,7 @@ import instructor
 from pydantic import BaseModel, Field
 
 from .prompts import stage1_analyze_query
-from .llm import build_llm
-from .config_chain import config
+from .config import config
 
 cfg = config()
 
@@ -18,7 +17,7 @@ class UserQueryAnalysis(BaseModel):
     userInputLanguageCode: str = Field(..., description="ISO 639-1 language code for the user query")
     userInputLanguageName: str = Field(..., description="ISO 639-1 language name for the user query")
     questionTranslatedToEnglish: str = Field(..., description="The user's question, translated to English")
-    requestCategory: str = Field(..., description="One of the following categories: [Support Request], [For Your Information], [Pull request announcement], [None of the above]")
+    contentCategory: str = Field(..., description="One of the following categories: [Support Request], [For Your Information], [Pull request announcement], [None of the above]")
 
 llmClient = instructor.patch(AzureOpenAI(
     azure_endpoint = os.environ['OPENAI_API_URL_ALTINN3_DEV'],
@@ -36,6 +35,7 @@ async def query(user_input) -> UserQueryAnalysis:
         messages=[
             {"role": "system", "content": stage1_analyze_query},
             {"role": "user", "content": user_input},
-        ]
+        ],
+        
     )
     return query_result
