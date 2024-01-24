@@ -2,9 +2,14 @@ import os
 import box
 import yaml
 import pprint
+import instructor
+from openai import AzureOpenAI, OpenAI
 
 pp = pprint.PrettyPrinter(indent=2)
 
+def env_var(var_name):
+    full_var_name = os.environ.get('DIGDIR_SLACK_BOT_PREFIX') + var_name + os.environ.get('DIGDIR_SLACK_BOT_POSTFIX')
+    return os.environ[full_var_name]
 
 def config():
     
@@ -21,3 +26,13 @@ def config():
 
     return cfg
 
+
+def azure_client():
+    return instructor.patch(AzureOpenAI(
+        azure_endpoint = env_var('AZURE_OPENAI_API_URL'),
+        api_key = env_var('AZURE_OPENAI_API_KEY'),
+        api_version = env_var('AZURE_OPENAI_VERSION')
+    ))
+
+def openai_client():
+    return instructor.patch(OpenAI(api_key = env_var('OPENAI_API_KEY')))
