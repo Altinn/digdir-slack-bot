@@ -228,7 +228,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text, first_thread_ts):
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": f"Generated in {round(rag_response['durations']['total'], ndigits=1)} seconds.\n" +
+                "text": f"Generated in {round(timeit.default_timer() - start, ndigits=1)} seconds.\n" +
                 f"Please give us your feedback with a :+1: or :-1:",
             },
         }
@@ -323,12 +323,15 @@ async def run_bot_async(app, hitl_config, say, msg_body, text, first_thread_ts):
             }
         )
 
+    duration_report = rag_response['durations']
+    duration_report['analyze'] = stage1_duration
+
     debug_blocks.append(
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": f"Processing times (sec):\n```\n{json.dumps(rag_response['durations'], indent=2)}```",
+                "text": f"Processing times (sec):\n```\n{json.dumps(duration_report, indent=2)}```",
             },
         }
     )
