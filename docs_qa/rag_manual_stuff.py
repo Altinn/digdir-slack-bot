@@ -46,6 +46,7 @@ async def rag_with_typesense(user_input, user_query_language_name):
 
     durations = {
         'total': 0,
+        'analyze': 0,
         'generate_searches': 0,
         'execute_searches': 0,
         'phrase_similarity_search': 0,
