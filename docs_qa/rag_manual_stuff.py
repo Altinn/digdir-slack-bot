@@ -2,6 +2,8 @@ import box
 import timeit
 import yaml
 import pprint
+import requests
+import json
 
 from langchain.pydantic_v1 import BaseModel, Field
 from langchain.prompts import ChatPromptTemplate
@@ -119,16 +121,44 @@ async def rag_with_typesense(user_input, user_query_language_name):
 
 
     # rerank results using ColBERT
+
+
+    # in-process - start
+    # start = timeit.default_timer()
+    # content_original_rank = [
+    #     document['content_markdown'][:int(cfg.MAX_SOURCE_LENGTH / 3)]
+    #     for document in search_hits
+    # ]
+    # reranked = RAG.rerank(query=user_input, documents=content_original_rank, k=10)
+    # in-process - end
+
+    # api - start
     start = timeit.default_timer()
     content_original_rank = [
         document['content_markdown'][:int(cfg.MAX_SOURCE_LENGTH / 3)]
         for document in search_hits
     ]
-    reranked = RAG.rerank(query=user_input, documents=content_original_rank, k=10)
+
+    # TODO: move this to env var "COLBERT_API_URL", add config for "USE_LOCAL_COLBERT"
+
+    rerank_url = 'https://assistant-3080-0.itonomi.com/colbert/rerank'
+    rerank_data = {
+        'user_input': user_input,
+        'documents': content_original_rank
+    }
+    rerank_response = requests.post(rerank_url, data=json.dumps(rerank_data))
+
+    # check response 200 OK
+    pp.pprint(rerank_response)
+
+    reranked = rerank_response.json()
+    # api - end
+
+
     durations['colbert_rerank'] = round(timeit.default_timer() - start, 1)
 
-    # print(f'ColBERT re-ranking results:')
-    # pp.pprint(reranked)
+    print(f'ColBERT re-ranking results:')
+    pp.pprint(reranked)
 
     # re-order search-hits based on new ranking
     search_hits_reranked = []

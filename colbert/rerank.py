@@ -36,7 +36,10 @@ async def rerank(request: RerankRequest):
 
 
 def main():
-    uvicorn.run(app, host="0.0.0.0", port=3000)
+    import ssl
+    ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+    ssl_context.load_cert_chain(certfile='path/to/your/certificate.pem', keyfile='path/to/your/key.pem')
+    uvicorn.run(app, host="0.0.0.0", port=3000, ssl_context=ssl_context)
 
 if __name__ == "__main__":
     main()
