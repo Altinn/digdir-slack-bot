@@ -2498,6 +2498,21 @@ extra = ["lxml (>=4.6)", "pydot (>=1.4.2)", "pygraphviz (>=1.11)", "sympy (>=1.1
 test = ["pytest (>=7.2)", "pytest-cov (>=4.0)"]
 
 [[package]]
+name = "nexusraven"
+version = "0.9.0"
+description = "This package is for using NexusRaven-V2, an open source function calling model, for function calling using OpenAI semantics."
+optional = false
+python-versions = ">=3.10"
+files = [
+    {file = "nexusraven-0.9.0-py3-none-any.whl", hash = "sha256:c0509b693affee785cac5ac0d13884d01be97d685c04dd8202dd059c29265cfb"},
+    {file = "nexusraven-0.9.0.tar.gz", hash = "sha256:5858405baaf16cee600aeb8b1a6b687a0b46018fd6554fa70a68d5712b68b707"},
+]
+
+[package.dependencies]
+openai = "*"
+requests = "*"
+
+[[package]]
 name = "ninja"
 version = "1.11.1.1"
 description = "Ninja is a small build system with a focus on speed"
@@ -6100,4 +6115,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "6998abf70a3cb50145f3b05436544f3ab80c2ab8512e4585403ae9fcef751d06"
+content-hash = "aa23f3c86f785fe3329d713508242ce3bc1db7587896953fbab70f8edab4c995"
