@@ -3,6 +3,7 @@ import pprint
 import openai
 import timeit
 
+from .config import env_var
 from docs_qa.stage1_analyze import query as stage1_analyze
 from docs_qa.rag_manual_stuff import rag_with_typesense
 
@@ -10,6 +11,8 @@ from docs_qa.rag_manual_stuff import rag_with_typesense
 pp = pprint.PrettyPrinter(indent=2)
 
 async def main(text):
+
+    print(f'USE_AZURE_OPENAI_API: {env_var("USE_AZURE_OPENAI_API")}')
 
     # categorize message, respond to messages of type '[Support Request]'
     start = timeit.default_timer()
@@ -24,7 +27,8 @@ async def main(text):
   content_category: {stage1_result.contentCategory}
 """)
 
-    return
+    # TODO: remove this return
+    #return
 
     message_category = stage1_result.contentCategory
 

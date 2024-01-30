@@ -7,4 +7,4 @@ with open('docs_qa/config/config.yml', 'r', encoding='utf8') as ymlfile:
 
 
 def config():
-    return cfg;
+    return cfg

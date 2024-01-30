@@ -325,6 +325,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text, first_thread_ts):
 
     duration_report = rag_response['durations']
     duration_report['analyze'] = stage1_duration
+    duration_report['total'] += stage1_duration
 
     debug_blocks.append(
         {
