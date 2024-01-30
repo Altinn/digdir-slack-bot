@@ -17,19 +17,15 @@ from docs_qa.extract_search_terms import run_query_async
 from docs_qa.translate_answer import translate_to_language
 import docs_qa.typesense_search as search
 from typing import Sequence
-from .config import config
+from .config import config, env_var, env_full_name
+from utils.general import is_valid_url
 
 pp = pprint.PrettyPrinter(indent=2)
 
 cfg = config()
 
-
-# Import config vars
-with open('docs_qa/config/config.yml', 'r', encoding='utf8') as ymlfile:
-    cfg = box.Box(yaml.safe_load(ymlfile))
-
-RAG = RAGPretrainedModel.from_pretrained("colbert-ir/colbertv2.0")
-
+if env_var('COLBERT_RERANK_IN_PROCESS') == True:
+    RAG = RAGPretrainedModel.from_pretrained("colbert-ir/colbertv2.0")
 
 
 class RagContextRefs(BaseModel):
@@ -122,37 +118,35 @@ async def rag_with_typesense(user_input, user_query_language_name):
 
     # rerank results using ColBERT
 
+    if env_var('COLBERT_RERANK_IN_PROCESS') == True:
+        start = timeit.default_timer()
+        content_original_rank = [
+            document['content_markdown'][:int(cfg.MAX_SOURCE_LENGTH / 3)]
+            for document in search_hits
+        ]
+        reranked = RAG.rerank(query=user_input, documents=content_original_rank, k=10)
+    else:        
+        start = timeit.default_timer()
+        content_original_rank = [
+            document['content_markdown'][:int(cfg.MAX_SOURCE_LENGTH / 3)]
+            for document in search_hits
+        ]
 
-    # in-process - start
-    # start = timeit.default_timer()
-    # content_original_rank = [
-    #     document['content_markdown'][:int(cfg.MAX_SOURCE_LENGTH / 3)]
-    #     for document in search_hits
-    # ]
-    # reranked = RAG.rerank(query=user_input, documents=content_original_rank, k=10)
-    # in-process - end
+        rerank_url = env_var('COLBERT_API_URL')
+        if not is_valid_url(rerank_url):
+            raise ValueError(f"Environment variable '{env_full_name('COLBERT_API_URL')}' is invalid: '{rerank_url}'")
 
-    # api - start
-    start = timeit.default_timer()
-    content_original_rank = [
-        document['content_markdown'][:int(cfg.MAX_SOURCE_LENGTH / 3)]
-        for document in search_hits
-    ]
+        rerank_data = {
+            'user_input': user_input,
+            'documents': content_original_rank
+        }
+        rerank_response = requests.post(rerank_url, data=json.dumps(rerank_data))
 
-    # TODO: move this to env var "COLBERT_API_URL", add config for "USE_LOCAL_COLBERT"
+        # check response 200 OK
+        if rerank_response.status_code != 200:
+            raise Exception(f"ColBERT Rerank API request failed with status code: {rerank_response.status_code}")
 
-    rerank_url = 'https://assistant-3080-0.itonomi.com/colbert/rerank'
-    rerank_data = {
-        'user_input': user_input,
-        'documents': content_original_rank
-    }
-    rerank_response = requests.post(rerank_url, data=json.dumps(rerank_data))
-
-    # check response 200 OK
-    pp.pprint(rerank_response)
-
-    reranked = rerank_response.json()
-    # api - end
+        reranked = rerank_response.json()
 
 
     durations['colbert_rerank'] = round(timeit.default_timer() - start, 1)
