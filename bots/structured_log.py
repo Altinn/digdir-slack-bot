@@ -2,6 +2,7 @@ import os
 import dataclasses
 from supabase import create_client, Client
 from utils.slack_utils import SlackContext
+from utils.general import env_var
 
 
 @dataclasses.dataclass
@@ -14,8 +15,8 @@ class BotLogEntry:
     durations: object = None
 
 # create single supabase client
-supabase: Client = create_client(os.environ['SLACK_BOT_SUPABASE_URL'],
-                                 os.environ['SLACK_BOT_SUPABASE_API_KEY'])
+supabase: Client = create_client(env_var('SLACK_BOT_SUPABASE_URL'),
+                                 env_var('SLACK_BOT_SUPABASE_API_KEY'))
 
 
 def bot_log(entry: BotLogEntry):
@@ -26,7 +27,9 @@ def bot_log(entry: BotLogEntry):
         print(f'Supabase error occurred when attempting to log:\n{supabase_ex}')
         return None
 
-    print(f'insert_response: {insert_response}')
+    if env_var('LOG_LEVEL') == 'debug':
+        print(f'insert_response: {insert_response}')
+
     return insert_response
 
 
@@ -39,6 +42,8 @@ def update_reactions(slack_context: SlackContext, reactions: object):
     if result_set and len(result_set.data) > 0:
         # update the row, storing the reactions object in the field called 'reactions'
         update_response = supabase.table('bot_log').update({'reactions': reactions}).eq("id", result_set.data[0].get("id")).execute()
-        print(f'update_response: {update_response}')
+
+        if env_var('LOG_LEVEL') == 'debug':
+            print(f'update_response: {update_response}')
 
     return result_set

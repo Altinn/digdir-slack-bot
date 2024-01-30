@@ -1,6 +1,5 @@
 import timeit
-import os
-from typing import Sequence
+import ssl
 from fastapi import FastAPI
 import uvicorn
 from typing import List
@@ -30,16 +29,14 @@ async def rerank(request: RerankRequest):
     ]
     reranked = RAG.rerank(query=request.user_input, documents=content_original_rank, k=10)
     duration = round(timeit.default_timer() - start, 1)
+    
     print(f'Re-ranked {len(reranked)} documents in {duration} seconds.')
     return reranked
 
 
 
 def main():
-    import ssl
-    ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-    ssl_context.load_cert_chain(certfile='path/to/your/certificate.pem', keyfile='path/to/your/key.pem')
-    uvicorn.run(app, host="0.0.0.0", port=3000, ssl_context=ssl_context)
+    uvicorn.run(app)
 
 if __name__ == "__main__":
     main()

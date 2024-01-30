@@ -3,7 +3,7 @@ import pprint
 import openai
 import timeit
 
-from .config import env_var
+from utils.general import env_var
 from docs_qa.stage1_analyze import query as stage1_analyze
 from docs_qa.rag_manual_stuff import rag_with_typesense
 

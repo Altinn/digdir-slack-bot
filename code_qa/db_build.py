@@ -9,6 +9,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.document_loaders import DirectoryLoader
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain.document_loaders import UnstructuredMarkdownLoader
+from utils.general import env_var
 
 # Import config vars
 with open('code_qa/config/config.yml', 'r', encoding='utf8') as ymlfile:
@@ -25,7 +26,7 @@ def run_db_build():
                                                    chunk_overlap=cfg.CHUNK_OVERLAP)
     texts = text_splitter.split_documents(documents)
 
-    api_key = os.environ['OPENAI_API_KEY_ALTINN3_DEV']
+    api_key = env_var('OPENAI_API_KEY')
     embeddings = OpenAIEmbeddings(openai_api_key=api_key)
 
     vectorstore = FAISS.from_documents(texts, embeddings)

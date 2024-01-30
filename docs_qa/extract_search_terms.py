@@ -1,6 +1,10 @@
 from pydantic import BaseModel, Field
 import pprint
-from .config import config, env_var, azure_client, openai_client
+from utils.general import scoped_env_var
+from .config import config, azure_client, openai_client
+
+stage_name = 'DOCS_QA_EXTRACT'
+env_var = scoped_env_var(stage_name)
 
 cfg = config()
 azureClient = azure_client()
@@ -39,6 +43,7 @@ Be creative. The more queries you include, the more likely you are to find relev
             ]
         )
     else:
+        print(f"{stage_name} model name: {env_var('OPENAI_API_MODEL_NAME')}")
         query_result = openaiClient.chat.completions.create(
             model=env_var('OPENAI_API_MODEL_NAME'),
             response_model=GeneratedSearchQueries,

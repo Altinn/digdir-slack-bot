@@ -1,6 +1,7 @@
 import os
 import pprint
-from .config import env_var, azure_client, openai_client
+from utils.general import env_var
+from .config import azure_client, openai_client
 
 azureClient = azure_client()
 openaiClient = openai_client()

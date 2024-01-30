@@ -1,15 +1,9 @@
-import os
 import box
 import yaml
 import pprint
 
 
-
 pp = pprint.PrettyPrinter(indent=2)
-
-def env_var(var_name):
-    full_var_name = os.environ.get('DIGDIR_SLACK_BOT_PREFIX') + var_name + os.environ.get('DIGDIR_SLACK_BOT_POSTFIX')
-    return os.environ[full_var_name]
 
 def config():
     

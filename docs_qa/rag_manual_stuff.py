@@ -17,7 +17,8 @@ from docs_qa.extract_search_terms import run_query_async
 from docs_qa.translate_answer import translate_to_language
 import docs_qa.typesense_search as search
 from typing import Sequence
-from .config import config, env_var, env_full_name
+from utils.general import env_var, env_full_name
+from .config import config
 from utils.general import is_valid_url
 
 pp = pprint.PrettyPrinter(indent=2)
@@ -151,8 +152,9 @@ async def rag_with_typesense(user_input, user_query_language_name):
 
     durations['colbert_rerank'] = round(timeit.default_timer() - start, 1)
 
-    print(f'ColBERT re-ranking results:')
-    pp.pprint(reranked)
+    if env_var('LOG_LEVEL') == 'debug':
+        print(f'ColBERT re-ranking results:')
+        pp.pprint(reranked)
 
     # re-order search-hits based on new ranking
     search_hits_reranked = []

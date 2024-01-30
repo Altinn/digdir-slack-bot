@@ -2,11 +2,11 @@ import os
 import timeit
 from supabase import create_client, Client
 from utils.slack_utils import SlackContext
-
+from utils.general import env_var
 
 # create single supabase client
-supabase: Client = create_client(os.environ['SLACK_BOT_SUPABASE_URL'],
-                                 os.environ['SLACK_BOT_SUPABASE_API_KEY'])
+supabase: Client = create_client(env_var('SLACK_BOT_SUPABASE_URL'),
+                                 env_var('SLACK_BOT_SUPABASE_API_KEY'))
 
 
 def lookup_config(slack_context : SlackContext, config_name: str, default_value):

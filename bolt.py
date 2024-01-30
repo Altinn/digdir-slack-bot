@@ -15,22 +15,19 @@ from slack_sdk.errors import SlackApiError
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
 import utils.slack_utils as slack_utils
+from utils.general import env_var
 # from bots.choose_team import run_bot_async as bot_choose_team
 from bots.code_qa import run_bot_async as bot_code_qa
 from bots.docs_qa import run_bot_async as bot_docs_qa
 # from bots.github_qa import run_bot_async as bot_github_qa
 from bots.structured_log import bot_log, update_reactions, BotLogEntry
 
-# Import config vars
-with open("bolt-config.yml", "r", encoding="utf8") as ymlfile:
-    boltcfg = box.Box(yaml.safe_load(ymlfile))
 
-slack_bot_suffix = boltcfg.SLACK_BOT_SUFFIX
 
 # Install the Slack app and get xoxb- token in advance
 app = App(
-    token=os.environ["SLACK_BOT_TOKEN" + slack_bot_suffix],
-    signing_secret=os.environ["SLACK_BOT_SIGNING_SECRET" + slack_bot_suffix],
+    token=env_var("SLACK_BOT_TOKEN"),
+    signing_secret=env_var("SLACK_BOT_SIGNING_SECRET"),
 )
 
 bot_query_word_code = "[code] "
@@ -40,7 +37,7 @@ bot_query_word_gh_issues = "[gh-issues] "
 
 pp = pprint.PrettyPrinter(indent=2)
 
-hitl_config = {"enabled": False, "qa_channel": os.environ["SLACK_BOT_REVIEW_CHANNEL_ID"]}
+hitl_config = {"enabled": False, "qa_channel": env_var("REVIEW_CHANNEL_ID")}
 
 
 @app.command("/hello-socket-mode")
@@ -296,8 +293,8 @@ def open_modal(ack, shortcut, client, logger):
 
 
 def main():
-    app.start(port=int(os.environ.get("PORT", 3000)))
-    SocketModeHandler(app, os.environ["SLACK_APP_TOKEN" + slack_bot_suffix]).start()
+    app.start(port=int(env_var("PORT", 3000)))
+    SocketModeHandler(app, env_var("SLACK_APP_TOKEN")).start()
 
 if __name__ == "__main__":
     main()
