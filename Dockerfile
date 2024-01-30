@@ -45,9 +45,7 @@ RUN apt-get update \
         # deps for installing poetry
         curl \
         # deps for building python deps
-        build-essential \
-        # deps for ColBERT
-        git
+        build-essential 
 
 # install poetry - respects $POETRY_VERSION & $POETRY_HOME
 # The --mount will mount the buildx cache directory to where 
@@ -62,8 +60,5 @@ COPY . ./
 # install runtime deps - uses $POETRY_VIRTUALENVS_IN_PROJECT internally
 RUN --mount=type=cache,target=/root/.cache \
     poetry install --no-root 
-
-#  --> also download required ColBERT model files
-RUN poetry run python docs_qa/preload_colbert.py
 
 CMD ["poetry", "run", "python", "bolt.py"]

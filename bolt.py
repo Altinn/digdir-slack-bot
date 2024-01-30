@@ -3,9 +3,6 @@
         Module: Slack bot Bolt app
 ===========================================
 """
-import os
-import box
-import yaml
 import asyncio
 import pprint
 import copy
