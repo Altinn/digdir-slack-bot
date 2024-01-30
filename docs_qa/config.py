@@ -7,9 +7,11 @@ from openai import AzureOpenAI, OpenAI
 
 pp = pprint.PrettyPrinter(indent=2)
 
+def env_full_name(var_name):
+    return os.environ.get('DIGDIR_SLACK_BOT_PREFIX') + var_name + os.environ.get('DIGDIR_SLACK_BOT_POSTFIX')
+
 def env_var(var_name):
-    full_var_name = os.environ.get('DIGDIR_SLACK_BOT_PREFIX') + var_name + os.environ.get('DIGDIR_SLACK_BOT_POSTFIX')
-    return os.environ[full_var_name]
+    return os.environ[env_full_name(var_name)]
 
 def config():
     
