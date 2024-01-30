@@ -10,7 +10,6 @@ from langchain.prompts import ChatPromptTemplate
 from langchain.chains.openai_functions import (
     create_structured_output_chain
 )
-from ragatouille import RAGPretrainedModel
 from docs_qa.llm import build_llm
 from docs_qa.prompts import qa_template
 from docs_qa.extract_search_terms import run_query_async
@@ -24,9 +23,6 @@ from utils.general import is_valid_url
 pp = pprint.PrettyPrinter(indent=2)
 
 cfg = config()
-
-if env_var('COLBERT_RERANK_IN_PROCESS') == True:
-    RAG = RAGPretrainedModel.from_pretrained("colbert-ir/colbertv2.0")
 
 
 class RagContextRefs(BaseModel):
