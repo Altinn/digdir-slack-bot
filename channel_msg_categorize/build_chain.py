@@ -3,14 +3,13 @@
         Module: Chain functions
 ===========================================
 '''
-import os
 from openai import AzureOpenAI
 import instructor
 from pydantic import BaseModel, Field
 
 from .prompts import stage1_analyze_query
-from .llm import build_llm
 from .config_chain import config
+from utils.general import env_var
 
 cfg = config()
 
@@ -21,15 +20,15 @@ class UserQueryAnalysis(BaseModel):
     requestCategory: str = Field(..., description="One of the following categories: [Support Request], [For Your Information], [Pull request announcement], [None of the above]")
 
 llmClient = instructor.patch(AzureOpenAI(
-    azure_endpoint = os.environ['OPENAI_API_URL_ALTINN3_DEV'],
-    api_key = os.environ['OPENAI_API_KEY_ALTINN3_DEV'],
-    api_version = os.environ['AZURE_OPENAI_VERSION']
+    azure_endpoint = env_var('OPENAI_API_URL'),
+    api_key = env_var('OPENAI_API_KEY'),
+    api_version = env_var('AZURE_OPENAI_VERSION')
 ))
     
 
 async def query(user_input) -> UserQueryAnalysis:
     query_result: UserQueryAnalysis = llmClient.chat.completions.create(
-        model=os.environ['AZURE_OPENAI_DEPLOYMENT'],
+        model=env_var('AZURE_OPENAI_DEPLOYMENT'),
         response_model=UserQueryAnalysis,
         temperature=0.1,
         max_retries=0,

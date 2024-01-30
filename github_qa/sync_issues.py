@@ -7,6 +7,7 @@ import pprint
 import typesense
 from datetime import datetime
 from .config import config
+from utils.general import env_var
 
 cfg = config()
 pp = pprint.PrettyPrinter(indent=2)
@@ -22,7 +23,7 @@ def get_latest_issues(org_repo, page_count):
         "direction": "asc", 
         "since": updated_after.isoformat()
     }
-    pat = os.environ['GITHUB_PERSONAL_ACCESS_TOKEN']
+    pat = env_var('GITHUB_PERSONAL_ACCESS_TOKEN')
     headers = {}
     if not pat:
         print(f'GITHUB_PERSONAL_ACCESS_TOKEN environment variable not found, Github anonymous rate limits will apply.')

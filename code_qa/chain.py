@@ -13,6 +13,7 @@ from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from code_qa.prompts import qa_template
 from code_qa.llm import build_llm
+from utils.general import env_var
 
 # Import config vars
 with open('code_qa/config/config.yml', 'r', encoding='utf8') as ymlfile:
@@ -38,7 +39,7 @@ def build_retrieval_qa(llm, prompt, vectordb):
     return dbqa
 
 def setup_dbqa():
-    api_key = os.environ['OPENAI_API_KEY_ALTINN3_DEV']
+    api_key = env_var('OPENAI_API_KEY')
     embeddings = OpenAIEmbeddings(openai_api_key=api_key)
     vectordb = FAISS.load_local(cfg.DB_FAISS_PATH, embeddings)
     llm = build_llm()

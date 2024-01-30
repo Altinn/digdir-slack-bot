@@ -16,6 +16,7 @@ from docs_qa.prompts import generate_search_phrases_template
 import docs_qa.typesense_search as search
 from typing import Sequence
 from .config import config
+from utils.general import env_var
 
 pp = pprint.PrettyPrinter(indent=2)
 cfg = config()
@@ -79,7 +80,7 @@ async def run(collection_name_tmp):
     client = typesense.Client(cfg.TYPESENSE_CONFIG)
 
     if collection_name_tmp == None or len(collection_name_tmp) == 0:
-        collection_name_tmp = f'{os.environ.get("TYPESENSE_DOCS_SEARCH_PHRASE_COLLECTION")}_{int(datetime.datetime.now().timestamp())}'
+        collection_name_tmp = f'{env_var("TYPESENSE_DOCS_SEARCH_PHRASE_COLLECTION")}_{int(datetime.datetime.now().timestamp())}'
 
     search.setup_search_phrase_schema(collection_name_tmp)
 
@@ -197,7 +198,7 @@ async def run(collection_name_tmp):
 def commit_tmp_collection(client: typesense.Client, collection_name_tmp: str):
         """Update alias to point to new collection"""
         old_collection_name = None
-        alias_name = os.environ.get("TYPESENSE_DOCS_SEARCH_PHRASE_COLLECTION", '')
+        alias_name = env_var("TYPESENSE_DOCS_SEARCH_PHRASE_COLLECTION", '')
 
         try:
             old_collection_name = client.aliases[alias_name].retrieve()['collection_name']

@@ -3,12 +3,12 @@
         Module: Open-source LLM Setup
 ===========================================
 '''
-from langchain_community.llms import CTransformers
-from langchain_openai import ChatOpenAI
-from dotenv import find_dotenv, load_dotenv
 import box
 import yaml
-import os
+from dotenv import find_dotenv, load_dotenv
+from langchain_community.llms import CTransformers
+from langchain_openai import ChatOpenAI
+from utils.general import env_var
 
 # Load environment variables from .env file
 load_dotenv(find_dotenv())
@@ -20,7 +20,7 @@ with open('code_qa/config/config.yml', 'r', encoding='utf8') as ymlfile:
 
 def build_llm():
     if cfg.MODEL_TYPE == 'gpt-4':
-        api_key = os.environ['OPENAI_API_KEY_ALTINN3_DEV']
+        api_key = env_var('OPENAI_API_KEY')
         llm = ChatOpenAI(model_name=cfg.MODEL_TYPE, 
                          temperature=cfg.TEMPERATURE, max_tokens=cfg.MAX_NEW_TOKENS,
                          openai_api_key=api_key)

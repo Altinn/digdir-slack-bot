@@ -4,6 +4,7 @@
 import openai
 import os
 import argparse
+from utils.general import env_var
 
 def ask_openai(system: str, user: str) -> str:
     """
@@ -18,12 +19,12 @@ def ask_openai(system: str, user: str) -> str:
     """
 
     # Load your OpenAI API key from the environment variable
-    openai.api_key = os.environ.get('OPENAI_API_KEY_ALTINN3_DEV')
-    openai.api_base = os.environ['OPENAI_API_KEY_ALTINN3_DEV']
+    openai.api_key = env_var('OPENAI_API_KEY')
+    openai.api_base = env_var('OPENAI_API_URL')
 
     # Ensure API key is present
     if not openai.api_key:
-        raise ValueError("Missing value for environment variable 'OPENAI_API_KEY_ALTINN3_DEV'")
+        raise ValueError("Missing value for environment variable 'OPENAI_API_KEY'")
 
     # Define the message to be sent
     messages = [{'role': 'system', 'content': system},
