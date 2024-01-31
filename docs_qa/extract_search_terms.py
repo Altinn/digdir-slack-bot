@@ -1,7 +1,8 @@
 from pydantic import BaseModel, Field
 import pprint
 from utils.general import scoped_env_var
-from .config import config, azure_client, openai_client
+from .config import config
+from utils.llm_utils import azure_client, openai_client
 
 stage_name = 'DOCS_QA_EXTRACT'
 env_var = scoped_env_var(stage_name)

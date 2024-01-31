@@ -30,3 +30,5 @@ def is_valid_url(url):
       return all([result.scheme, result.netloc])
   except ValueError:
       return False
+
+

@@ -1,9 +1,6 @@
-import os
 import box
 import yaml
 import pprint
-import instructor
-from openai import AzureOpenAI, OpenAI
 from utils.general import env_var
 
 pp = pprint.PrettyPrinter(indent=2)
@@ -23,13 +20,3 @@ def config():
 
     return cfg
 
-
-def azure_client():
-    return instructor.patch(AzureOpenAI(
-        azure_endpoint = env_var('AZURE_OPENAI_API_URL'),
-        api_key = env_var('AZURE_OPENAI_API_KEY'),
-        api_version = env_var('AZURE_OPENAI_VERSION')
-    ))
-
-def openai_client():
-    return instructor.patch(OpenAI(api_key = env_var('OPENAI_API_KEY')))

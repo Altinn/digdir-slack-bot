@@ -15,14 +15,19 @@ from docs_qa.prompts import qa_template
 from docs_qa.extract_search_terms import run_query_async
 from docs_qa.translate_answer import translate_to_language
 import docs_qa.typesense_search as search
-from typing import Sequence
-from utils.general import env_var, env_full_name
+from typing import Sequence, Any, Dict
+from utils.general import scoped_env_var, env_full_name
+from utils.llm_utils import chat_stream, azure_client, openai_client
 from .config import config
 from utils.general import is_valid_url
 
 pp = pprint.PrettyPrinter(indent=2)
 
+stage_name = 'DOCS_QA_RAG'
+env_var = scoped_env_var(stage_name)
 cfg = config()
+azureClient = azure_client()
+openaiClient = openai_client()
 
 
 class RagContextRefs(BaseModel):
@@ -37,7 +42,8 @@ class RagPromptReply(BaseModel):
     
 
 
-async def rag_with_typesense(user_input, user_query_language_name):
+async def rag_with_typesense(user_input, user_query_language_name, extract_sources=True, 
+                             stream_callback_msg1=None, stream_callback_msg2=None):
 
     durations = {
         'total': 0,
@@ -219,43 +225,80 @@ async def rag_with_typesense(user_input, user_query_language_name):
              ('human',  qa_template(user_query_language_name))]
         )
 
+    if extract_sources:
+        runnable = create_structured_output_chain(RagPromptReply, llm, prompt)
+        runnable_response = runnable.invoke({
+            "context": yaml.dump(loaded_docs),
+            "question": user_input
+        })
 
-    runnable = create_structured_output_chain(RagPromptReply, llm, prompt)
-    result = runnable.invoke({
-        "context": yaml.dump(loaded_docs),
-        "question": user_input
-    })
+        # print(f"Time to run RAG structured output chain: {chain_end - chain_start} seconds")
+
+        # print(f'runnable result:')
+        # pp.pprint(result)
+
+        if runnable_response['function'] is not None:
+            relevant_sources = [{
+                'url': context.source,
+                'title': next((hit['lvl0'] for hit in search_hits if hit['url'] == context.source), None),
+            }
+            for context in runnable_response['function'].relevant_contexts]
+            rag_success = runnable_response['function'].i_dont_know != True
+        else:
+            relevant_sources = []
+            # rag_success = None
+        english_answer = runnable_response['function'].helpful_answer
+        translated_answer = runnable_response['function'].helpful_answer
+
+    else:
+        full_prompt = qa_template(user_query_language_name).format(context=yaml.dump(loaded_docs), question=user_input)
+        messages=[
+            {
+                "role": "system", 
+                "content": "You are a helpful assistant."
+            },
+            {"role": "user", "content": full_prompt },
+        ]
+        if not callable(stream_callback_msg1):
+            if env_var('USE_AZURE_OPENAI_API') == True:
+                chat_response = azureClient.chat.completions.create(
+                    model=env_var('AZURE_OPENAI_DEPLOYMENT'),
+                    temperature=0.1,
+                    max_retries=0,  
+                    messages=messages              
+                )
+            else:
+                print(f"{stage_name} model name: {env_var('OPENAI_API_MODEL_NAME')}")
+                chat_response = openaiClient.chat.completions.create(
+                    model=env_var('OPENAI_API_MODEL_NAME'),
+                    temperature=0.1,
+                    max_retries=0,
+                    messages=messages
+                )
+            english_answer = chat_response.choices[0].message.content
+            translated_answer = english_answer
+            rag_success = True
+            relevant_sources = []
+        else:
+            english_answer = chat_stream(messages, stream_callback_msg1)
+            translated_answer = english_answer
+            rag_success = True
+            relevant_sources = []
 
 
     durations['rag_query'] = round(timeit.default_timer() - start, 1)
 
-    # print(f"Time to run RAG structured output chain: {chain_end - chain_start} seconds")
 
-    # print(f'runnable result:')
-    # pp.pprint(result)
 
-    if result['function'] is not None:
-        relevant_sources = [{
-            'url': context.source,
-            'title': next((hit['lvl0'] for hit in search_hits if hit['url'] == context.source), None),
-        }
-        for context in result['function'].relevant_contexts]
-        rag_success = result['function'].i_dont_know != True
-    else:
-        relevant_sources = []
-        # rag_success = None
-
-    start = timeit.default_timer()
-    
+    start = timeit.default_timer()    
     # perhaps move this to a config flag
-    translated_answer = result['function'].helpful_answer
 
     translation_enabled = True
 
     # translate if necessary
-    if translation_enabled and rag_success and  user_query_language_name != 'English':
+    if translation_enabled and rag_success and user_query_language_name != 'English':
         translated_answer = await translate_to_language(
-            result['function'].helpful_answer, user_query_language_name)
+            english_answer, user_query_language_name, stream_callback_msg2)
     
     durations['translation'] = round(timeit.default_timer() - start, 1)
     durations['total'] = round(timeit.default_timer() - total_start, 1)
@@ -264,7 +307,7 @@ async def rag_with_typesense(user_input, user_query_language_name):
     response = {
         'english_user_query': user_input,
         'user_query_language_name': user_query_language_name,
-        'english_answer': result['function'].helpful_answer,
+        'english_answer': english_answer,
         'translated_answer': translated_answer,
         'rag_success': rag_success,
         'search_queries': extract_search_queries.searchQueries,
