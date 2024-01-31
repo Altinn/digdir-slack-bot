@@ -2,6 +2,8 @@ import json
 import pprint
 import openai
 import timeit
+import random
+import asyncio
 
 from utils.general import env_var
 from docs_qa.stage1_analyze import query as stage1_analyze
@@ -9,6 +11,19 @@ from docs_qa.rag_manual_stuff import rag_with_typesense
 
 
 pp = pprint.PrettyPrinter(indent=2)
+
+def print_chunks(partial_response: str):
+    print(f'Partial response:\n{partial_response}')
+
+def print_and_think(partial_response: str):
+    asyncio.ensure_future(print_and_sleep(partial_response, 5))
+
+async def print_and_sleep(partial_response: str, sleep_time=5):
+    random_number = random.randint(10, 99)
+    print(f'Chunk id {random_number}: length: {len(partial_response)}')
+    # print(partial_response)
+    await asyncio.sleep(sleep_time)
+    print(f'Chunk id {random_number} - done sleeping for {sleep_time} seconds')
 
 async def main(text):
 
@@ -19,11 +34,11 @@ async def main(text):
     stage1_result = await stage1_analyze(text)
     duration = round(timeit.default_timer() - start, 1)
 
-#   english_user_query: {stage1_result.questionTranslatedToEnglish}
     print(f"""stage1_result in {duration} seconds:
   language_code: {stage1_result.userInputLanguageCode}
   language_name: {stage1_result.userInputLanguageName}
   original_user_query: {text}
+  english_user_query: {stage1_result.questionTranslatedToEnglish}
   content_category: {stage1_result.contentCategory}
 """)
 
@@ -51,7 +66,10 @@ async def main(text):
     rag_error = None
 
     try:
-        rag_response = await rag_with_typesense(text, stage1_result.userInputLanguageName)    
+        rag_response = await rag_with_typesense(stage1_result.questionTranslatedToEnglish, 
+                                                stage1_result.userInputLanguageName, 
+                                                extract_sources=False, 
+                                                stream_callback=print_and_think)    
     except openai.APIConnectionError as e:
         rag_error = f"Azure OpenAI error: {e}"
     except openai.RateLimitError as e:

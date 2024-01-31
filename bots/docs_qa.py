@@ -1,12 +1,14 @@
 import json
 import pprint
 import timeit
+import asyncio
 from bots.config import lookup_config 
 
 from slack_sdk.errors import SlackApiError
 import openai
 import utils.slack_utils as slack_utils
 from bots.structured_log import bot_log, BotLogEntry
+from utils.markdown import split_to_sections
 
 from docs_qa.stage1_analyze import query as stage1_analyze
 from docs_qa.rag_manual_stuff import rag_with_typesense
@@ -124,7 +126,10 @@ async def run_bot_async(app, hitl_config, say, msg_body, text, first_thread_ts):
 
     try:
         rag_start = timeit.default_timer()
-        rag_response = await rag_with_typesense(text, stage1_result.userInputLanguageName)
+        update_msg_callback = update_english_answer_callback(app, first_thread_ts["ts"], first_thread_ts["channel"])
+        rag_response = await rag_with_typesense(stage1_result.questionTranslatedToEnglish, 
+                                                stage1_result.userInputLanguageName, 
+                                                False, update_msg_callback)
 
         payload = {
             "bot_name": "docs",
@@ -206,9 +211,16 @@ async def run_bot_async(app, hitl_config, say, msg_body, text, first_thread_ts):
         }
     )
 
-    blocks = [
-        answer_block,
-    ]
+    sections = split_to_sections(answer)
+
+    blocks = []
+    for i, paragraph in enumerate(sections):
+        blocks.insert(i, {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": paragraph},
+        })
+
+
     if len(relevant_sources) > 0:
         links_mrkdwn = "\n".join(
             f"<{source['url']}|{source['title']}>" for source in relevant_sources
@@ -249,7 +261,7 @@ async def run_bot_async(app, hitl_config, say, msg_body, text, first_thread_ts):
             as_user=True,
         )
     except SlackApiError as e:
-        print(f"Error attempting to delete temp bot message {e}")
+        print(f"Error attempting to update temp bot message {e}")
 
     
 
@@ -345,3 +357,30 @@ async def run_bot_async(app, hitl_config, say, msg_body, text, first_thread_ts):
             channel=target_channel_id,
         )
 
+def update_english_answer_callback(app, ts: str, channel: str):
+
+    def inner(partial_response):
+
+        sections = split_to_sections(partial_response)
+
+        blocks = []
+        for i, paragraph in enumerate(sections):
+            blocks.insert(i, {
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": paragraph},
+            })
+
+        print(f'Partial response update for channel \'{channel}\' ts {ts}, time: {round(timeit.default_timer(), 1)}')
+
+        try:
+            app.client.chat_update(
+                channel=channel,
+                ts=ts,
+                text='...',
+                blocks=blocks,
+                as_user=True,
+            )
+        except SlackApiError as e:
+            print(f"Error attempting to update English bot message {e}")
+    
+    return inner
