@@ -12,8 +12,8 @@ from docs_qa.rag_manual_stuff import rag_with_typesense
 
 pp = pprint.PrettyPrinter(indent=2)
 
-def print_chunks(partial_response: str):
-    print(f'Partial response:\n{partial_response}')
+def print_chunks(timed_chunk: str):
+    print(f'Chat stream logger callback - length: {len(timed_chunk)}')
 
 def print_and_think(partial_response: str):
     asyncio.ensure_future(print_and_sleep(partial_response, 5))
@@ -69,7 +69,8 @@ async def main(text):
         rag_response = await rag_with_typesense(stage1_result.questionTranslatedToEnglish, 
                                                 stage1_result.userInputLanguageName, 
                                                 extract_sources=False, 
-                                                stream_callback=print_and_think)    
+                                                stream_callback_msg1=print_chunks,
+                                                stream_callback_msg2=print_chunks)    
     except openai.APIConnectionError as e:
         rag_error = f"Azure OpenAI error: {e}"
     except openai.RateLimitError as e:

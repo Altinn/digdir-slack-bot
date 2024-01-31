@@ -15,9 +15,10 @@ from docs_qa.prompts import qa_template
 from docs_qa.extract_search_terms import run_query_async
 from docs_qa.translate_answer import translate_to_language
 import docs_qa.typesense_search as search
-from typing import Sequence
+from typing import Sequence, Any, Dict
 from utils.general import scoped_env_var, env_full_name
-from .config import config, azure_client, openai_client
+from utils.llm_utils import chat_stream, azure_client, openai_client
+from .config import config
 from utils.general import is_valid_url
 
 pp = pprint.PrettyPrinter(indent=2)
@@ -41,7 +42,8 @@ class RagPromptReply(BaseModel):
     
 
 
-async def rag_with_typesense(user_input, user_query_language_name, extract_sources=True, stream_callback=None):
+async def rag_with_typesense(user_input, user_query_language_name, extract_sources=True, 
+                             stream_callback_msg1=None, stream_callback_msg2=None):
 
     durations = {
         'total': 0,
@@ -257,9 +259,7 @@ async def rag_with_typesense(user_input, user_query_language_name, extract_sourc
             },
             {"role": "user", "content": full_prompt },
         ]
-        streaming_enabled = callable(stream_callback)
-
-        if not streaming_enabled:
+        if not callable(stream_callback_msg1):
             if env_var('USE_AZURE_OPENAI_API') == True:
                 chat_response = azureClient.chat.completions.create(
                     model=env_var('AZURE_OPENAI_DEPLOYMENT'),
@@ -280,46 +280,7 @@ async def rag_with_typesense(user_input, user_query_language_name, extract_sourc
             rag_success = True
             relevant_sources = []
         else:
-            content_so_far = ''
-            chunk_count = 0
-            last_callback = timeit.default_timer()
-
-            if env_var('USE_AZURE_OPENAI_API') == True:
-                for chunk in azureClient.chat.completions.create(
-                                model=env_var('AZURE_OPENAI_DEPLOYMENT'),
-                                temperature=0.1,
-                                max_retries=0,
-                                messages=messages,
-                                stream=True):
-                    
-                    content = chunk.choices[0].delta.content
-                    if content is not None:
-                        content_so_far += content
-                        chunk_count += 1
-
-                    if timeit.default_timer() - last_callback > 5:
-                        last_callback = timeit.default_timer()
-                        stream_callback(content_so_far)
-                        
-            else:
-                print(f"{stage_name} model name: {env_var('OPENAI_API_MODEL_NAME')}")
-                for chunk in openaiClient.chat.completions.create(
-                                model=env_var('OPENAI_API_MODEL_NAME'),
-                                temperature=0.1,
-                                max_retries=0,
-                                messages=messages,
-                                stream=True):
-                    
-                    content = chunk.choices[0].delta.content
-                    if content is not None:
-                        content_so_far += content
-                        chunk_count += 1
-
-                    if timeit.default_timer() - last_callback > 5:
-                        last_callback = timeit.default_timer()
-                        stream_callback(content_so_far)
-
-            english_answer = content_so_far
+            english_answer = chat_stream(messages, stream_callback_msg1)
             translated_answer = english_answer
             rag_success = True
             relevant_sources = []
@@ -335,9 +296,9 @@ async def rag_with_typesense(user_input, user_query_language_name, extract_sourc
     translation_enabled = True
 
     # translate if necessary
-    if translation_enabled and rag_success and  user_query_language_name != 'English':
+    if translation_enabled and rag_success and user_query_language_name != 'English':
         translated_answer = await translate_to_language(
-            english_answer, user_query_language_name)
+            english_answer, user_query_language_name, stream_callback_msg2)
     
     durations['translation'] = round(timeit.default_timer() - start, 1)
     durations['total'] = round(timeit.default_timer() - total_start, 1)

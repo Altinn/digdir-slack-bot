@@ -1,7 +1,7 @@
 import json
 import pprint
 import timeit
-import asyncio
+from typing import Callable
 from bots.config import lookup_config 
 
 from slack_sdk.errors import SlackApiError
@@ -95,11 +95,12 @@ async def run_bot_async(app, hitl_config, say, msg_body, text, first_thread_ts):
         thread_ts = src_evt_context.ts
 
     busy_reading_msg = "Reading Altinn Studio docs..."
+    will_translate_msg = ''
 
     if stage1_result.userInputLanguageCode == 'no':
-        busy_reading_msg = "Søker gjennom dokumentasjonen..."
-    elif stage1_result.userInputLanguageCode == 'nn':
-        busy_reading_msg = "Altinn Studio dokumentasjon lesast..."
+        will_translate_msg = "Oversetter til norsk snart..."
+    else:
+       will_translate_msg = f"We will also translate this message to {stage1_result.userInputLanguageName}."
     
 
     if hitl_enabled:
@@ -122,14 +123,22 @@ async def run_bot_async(app, hitl_config, say, msg_body, text, first_thread_ts):
         else:
             first_thread_ts = say(text=busy_reading_msg, thread_ts=thread_ts)
 
+    translated_msg_callback = None
+
+    if will_translate(stage1_result):
+        second_thread_ts = say(text=will_translate_msg, thread_ts=thread_ts)            
+        translated_msg_callback = update_slack_msg_callback(app, second_thread_ts)
+
     rag_with_typesense_error = None
 
     try:
         rag_start = timeit.default_timer()
-        update_msg_callback = update_english_answer_callback(app, first_thread_ts["ts"], first_thread_ts["channel"])
+        
         rag_response = await rag_with_typesense(stage1_result.questionTranslatedToEnglish, 
                                                 stage1_result.userInputLanguageName, 
-                                                False, update_msg_callback)
+                                                False, 
+                                                update_slack_msg_callback(app, first_thread_ts),
+                                                translated_msg_callback)
 
         payload = {
             "bot_name": "docs",
@@ -187,83 +196,14 @@ async def run_bot_async(app, hitl_config, say, msg_body, text, first_thread_ts):
 
         return
 
-    answer = rag_response.get('english_answer', '')
-    if stage1_result.userInputLanguageCode != 'en':
-        answer = rag_response["translated_answer"]
+    # call finalize_answer
+    finalize_answer(app, first_thread_ts, rag_response.get('english_answer', ''), rag_response, 
+                    rag_response["durations"]["total"] + stage1_duration - rag_response["durations"]["translation"])
+
+    if will_translate(stage1_result):
+        finalize_answer(app, second_thread_ts, rag_response.get('translated_answer', ''), rag_response, 
+                        rag_response["durations"]["translation"])
         
-    relevant_sources = rag_response["relevant_urls"]
-
-    answer_block = (
-        {
-            "type": "section",
-            "text": {"type": "mrkdwn", "text": answer},
-            "accessory": {
-                "type": "button",
-                "text": {"type": "plain_text", "text": f"Send"},
-                "value": f"{src_evt_context.team}|{src_evt_context.channel}|{src_evt_context.ts}",
-                "action_id": "docs|qa|approve_reply",
-            },
-        }
-        if hitl_enabled
-        else {
-            "type": "section",
-            "text": {"type": "mrkdwn", "text": answer},
-        }
-    )
-
-    sections = split_to_sections(answer)
-
-    blocks = []
-    for i, paragraph in enumerate(sections):
-        blocks.insert(i, {
-            "type": "section",
-            "text": {"type": "mrkdwn", "text": paragraph},
-        })
-
-
-    if len(relevant_sources) > 0:
-        links_mrkdwn = "\n".join(
-            f"<{source['url']}|{source['title']}>" for source in relevant_sources
-        )
-        blocks.append(
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": f"For more information:\n{links_mrkdwn}",
-                },
-            }
-        )
-
-    blocks.append(
-        {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": f"Generated in {round(timeit.default_timer() - start, ndigits=1)} seconds.\n" +
-                f"Please give us your feedback with a :+1: or :-1:",
-            },
-        }
-    )
-
-    reply_text = (
-        f"Answer:\n{answer}"
-        if hitl_enabled
-        else f'Here is what I found related to your query:\n   >"{text}"\n\n_{answer}_'
-    )
-
-    try:
-        app.client.chat_update(
-            channel=first_thread_ts["channel"],
-            ts=first_thread_ts["ts"],
-            text=reply_text,
-            blocks=blocks,
-            as_user=True,
-        )
-    except SlackApiError as e:
-        print(f"Error attempting to update temp bot message {e}")
-
-    
 
     bot_log(
         BotLogEntry(
@@ -357,11 +297,19 @@ async def run_bot_async(app, hitl_config, say, msg_body, text, first_thread_ts):
             channel=target_channel_id,
         )
 
-def update_english_answer_callback(app, ts: str, channel: str):
+def will_translate(stage1_result):
+    return stage1_result.userInputLanguageCode != 'en'
+
+
+def update_slack_msg_callback(slack_app, thread_ts) -> Callable:
+
+    content_chunks: list[str] = []
 
     def inner(partial_response):
 
-        sections = split_to_sections(partial_response)
+        content_chunks.append(partial_response)
+
+        sections = split_to_sections("".join(content_chunks))
 
         blocks = []
         for i, paragraph in enumerate(sections):
@@ -370,17 +318,69 @@ def update_english_answer_callback(app, ts: str, channel: str):
                 "text": {"type": "mrkdwn", "text": paragraph},
             })
 
-        print(f'Partial response update for channel \'{channel}\' ts {ts}, time: {round(timeit.default_timer(), 1)}')
+        print(f'Partial response update for channel \'{thread_ts["channel"]}\' ts {thread_ts["ts"]}, time: {round(timeit.default_timer(), 1)}')
 
         try:
-            app.client.chat_update(
-                channel=channel,
-                ts=ts,
+            slack_app.client.chat_update(
+                channel=thread_ts["channel"],
+                ts=thread_ts["ts"],
                 text='...',
                 blocks=blocks,
                 as_user=True,
             )
         except SlackApiError as e:
-            print(f"Error attempting to update English bot message {e}")
+            print(f"Error attempting to update Slack message {e}")
     
     return inner
+
+def finalize_answer(app, thread_ts, answer, rag_response, duration):
+        
+    relevant_sources = rag_response["relevant_urls"]
+
+    sections = split_to_sections(answer)
+
+    blocks = []
+    for i, paragraph in enumerate(sections):
+        blocks.insert(i, {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": paragraph},
+        })
+
+
+    if len(relevant_sources) > 0:
+        links_mrkdwn = "\n".join(
+            f"<{source['url']}|{source['title']}>" for source in relevant_sources
+        )
+        blocks.append(
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"For more information:\n{links_mrkdwn}",
+                },
+            }
+        )
+
+    blocks.append(
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": f"Generated in {round(duration, ndigits=1)} seconds.\n" +
+                f"Please give us your feedback with a :+1: or :-1:",
+            },
+        }
+    )
+
+    try:
+        app.client.chat_update(
+            channel=thread_ts["channel"],
+            ts=thread_ts["ts"],
+            text='Final answer',
+            blocks=blocks,
+            as_user=True,
+        )
+    except SlackApiError as e:
+        print(f"Error attempting to update temp bot message {e}")
+
+    

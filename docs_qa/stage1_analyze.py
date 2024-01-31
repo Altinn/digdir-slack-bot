@@ -8,7 +8,8 @@ from pydantic import BaseModel, Field
 
 from .prompts import stage1_analyze_query
 from utils.general import scoped_env_var
-from .config import config, azure_client, openai_client
+from .config import config
+from utils.llm_utils import azure_client, openai_client
 
 stage_name = 'DOCS_QA_ANALYZE'
 env_var = scoped_env_var(stage_name)
