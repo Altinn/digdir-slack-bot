@@ -21,10 +21,12 @@ def split_to_sections(markdown: str):
 
     for i in range(len(sections)):
         if has_open_code_block(sections[i]):
-            if i < (len(sections) - 1):
-                print(f'Merging section {i} and {i+1}')
-                sections[i] = sections[i] + section_delimiter + sections[i+1]
-                sections[i+1] = ""
+            a = i + 1
+            while has_open_code_block(sections[i]) and a <= (len(sections) - 1):
+                print(f'Merging section {i} and {a}')
+                sections[i] = sections[i] + section_delimiter + sections[a]
+                sections[a] = ""
+                a += 1            
 
     # print('Sections before filtering')
     # log_sections(sections)
@@ -76,6 +78,27 @@ Here is an example of a standard notification order that could be used to send a
   "body": "A message sent from an application owner through Altinn.",
   "contentType": "Html"
  },
+
+
+ "emailTemplate2": {
+  "fromAddress": "noreply@altinn.cloud",
+  "subject": "A test email from Altinn Notifications",
+  "body": "A message sent from an application owner through Altinn.",
+  "contentType": "Html"
+ },
+"emailTemplate3": {
+  "fromAddress": "noreply@altinn.cloud",
+  "subject": "A test email from Altinn Notifications",
+  "body": "A message sent from an application owner through Altinn.",
+  "contentType": "Html"
+ },
+ "emailTemplate4": {
+  "fromAddress": "noreply@altinn.cloud",
+  "subject": "A test email from Altinn Notifications",
+  "body": "A message sent from an application owner through Altinn.",
+  "contentType": "Html"
+ },
+
  "links": {
   "self": "https://platform.at22.altinn.cloud/notifications/api/v1/orders/a56c0933-d609-4b5c-a5da-bccfd407c9b8",
   "status": "https://platform.at22.altinn.cloud/notifications/api/v1/orders/a56c0933-d609-4b5c-a5da-bccfd407c9b8/status"
