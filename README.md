@@ -2,17 +2,25 @@
 
 This is an early version of a general purpose Generative AI Assistant, hosted as a Slack app. 
 
-The goal is to rapidly prototype core GenAI concepts to support Altinn 3 app developers by better leveragine the rich data sources already available. 
+Our goal is to rapidly prototype core GenAI concepts to support Altinn 3 app developers better leverage available data sources. 
 
-The main data sources on the evaluation list include:
+We have completed the initial prototyping phase and are now focusing on "product-izing" by improving automated data ingestion, finalizing Web APIs and porting much of the code to TypeScript.
 
-- Altinn 3 Studio documentation, schema files and source code
+In addition to documentation, we have implemented proof of concept level demonstrations with the following:
+
+- Altinn 3 Studio schema files and source code
 - Publicly available Altinn 3 app source code
-- Slack conversation history related to developer support
+
+
+# Agent flow 
+
+This diagram shows the main functional blocks and how data flows between them:
+
+![Agent Flow](/documentation/agent-flow.jpg)
+
 
 
 ## Quickstart
-
 
 ### Install dependencies:  
 
