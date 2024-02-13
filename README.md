@@ -19,6 +19,9 @@ This diagram shows the main functional blocks and how data flows between them:
 ![Agent Flow](/documentation/agent-flow.jpg)
 
 
+## See it in action
+
+[#altinn-assistant](https://altinndevops.slack.com/archives/C06JQLHSZME/p1707478070231209)  on Altinn Devops Slack
 
 ## Quickstart
 
@@ -44,12 +47,6 @@ Note: in order for your local bot endpoint to receive traffic from Slack, you ne
 
 ## RAG concepts
 
-TODO: 
-
-_add description and background references here_
-
-
-_add sequence diagram for RAG with query understanding here_
 
 ```mermaid
 sequenceDiagram    
@@ -92,18 +89,4 @@ poetry run python3 code_qa/update_summaries.py <path_to>/needs-summary-update.tx
 
 ## Indexing Altinn Studio Docs
 
-docs_qa is dependent on the DocSearch web scraper for updating the Typesense free text index.
-
-1. Checkout repo
-2. Setup .env file with following properties
-3. Run scraper to update search index
-
-
-## Tools
-- **LangChain**: Framework for developing applications powered by language models
-- **C Transformers**: Python bindings for the Transformer models implemented in C/C++ using GGML library
-- **FAISS**: Open-source library for efficient similarity search and clustering of dense vectors.
-- **Sentence-Transformers (all-MiniLM-L6-v2)**: Open-source pre-trained transformer model for embedding text to a 384-dimensional dense vector space for tasks like clustering or semantic search.
-- **Llama-2-7B-Chat**: Open-source fine-tuned Llama 2 model designed for chat dialogue. Leverages publicly available instruction datasets and over 1 million human annotations. 
-- **Poetry**: Tool for dependency management and Python packaging
-
+Indexing instructions will be updated in the new repo coming soon.
