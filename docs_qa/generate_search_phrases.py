@@ -5,6 +5,7 @@ import yaml
 import pprint
 import typesense
 import datetime
+import hashlib
 
 from langchain.pydantic_v1 import BaseModel, Field
 from langchain.prompts import ChatPromptTemplate
@@ -138,8 +139,22 @@ async def run(collection_name_tmp):
             existing_phrases = await lookup_search_phrases(url, collection_name_tmp)
             # pp.pprint(existing_phrases)
 
-            if existing_phrases.get('found', 0) > 0:
-                print(f'Found existing phrases, skipping for url: {url}')            
+            content_md = search_hit.get('content_markdown','')
+            checksum_md = hashlib.sha1(content_md.encode()).hexdigest() if content_md else None
+
+            existing_phrase_count = existing_phrases.get('found', 0)
+
+            if existing_phrase_count > 0:
+                stored_checksum = existing_phrases.get('hits', [])[0].get('document', {}).get('checksum', '')
+                checksum_matches = stored_checksum == checksum_md
+
+                if checksum_matches:
+                    print(f'Found existing phrases and checksum matches, skipping for url: {url}')            
+                    doc_index += 1      
+                    continue
+
+            if existing_phrases.get('checksum', '') == checksum_md:
+                print(f'Found existing phrases and checksum matches, skipping for url: {url}')            
                 doc_index += 1    
                 continue
 
@@ -165,6 +180,16 @@ async def run(collection_name_tmp):
 
             print(f'Generated search phrases for: {url}\n')
 
+            # delete existing search phrases before uploading new
+            for document in existing_phrases.get('hits', []):
+                doc_id = document.get('document', {}).get('id', '')
+                if doc_id:
+                    try:
+                        client.collections[collection_name_tmp].documents[doc_id].delete()
+                        print(f'Search phrase ID {doc_id} deleted for url {url}')
+                    except typesense.exceptions.ObjectNotFound:
+                        print(f'Search phrase ID {doc_id} not found in collection "{collection_name_tmp}"')
+
             upload_batch = []
             
             
@@ -176,6 +201,8 @@ async def run(collection_name_tmp):
                     'search_phrase': phrase.get('search_phrase', ''),
                     'sort_order': index,
                     'item_priority': 1,
+                    'updated_at': int(datetime.datetime.utcnow().timestamp()),
+                    'checksum': checksum_md,
                 }
                 upload_batch.append(batch)
 

@@ -194,6 +194,8 @@ def setup_search_phrase_schema(collection_name_tmp):
                             }}},
                 {'name': 'language', 'type': 'string', 'facet': True, 'optional': True},
                 {'name': 'item_priority', 'type': 'int64'},
+                {'name': 'updated_at', 'type': 'int64'},
+                {'name': 'checksum', 'type': 'string'}
             ],
             'default_sorting_field': 'sort_order',
             'token_separators': ['_', '-', '/']
@@ -218,7 +220,7 @@ async def lookup_search_phrases(url, collection_name: str):
                     "collection": collection_name,
                     "q": "*",
                     "query_by":"url",
-                    "include_fields": "id,url,search_phrase,sort_order",
+                    "include_fields": "id,url,search_phrase,sort_order,updated_at,checksum",
                     "filter_by": f"url:={url}",
                     "sort_by": "sort_order:asc",                
                     "per_page": 30,
