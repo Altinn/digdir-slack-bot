@@ -180,7 +180,15 @@ async def run(collection_name_tmp):
 
             print(f'Generated search phrases for: {url}\n')
 
-            # TODO: delete existing search phrases before uploading new
+            # delete existing search phrases before uploading new
+            for document in existing_phrases.get('hits', []):
+                doc_id = document.get('document', {}).get('id', '')
+                if doc_id:
+                    try:
+                        client.collections[collection_name_tmp].documents[doc_id].delete()
+                        print(f'Search phrase ID {doc_id} deleted for url {url}')
+                    except typesense.exceptions.ObjectNotFound:
+                        print(f'Search phrase ID {doc_id} not found in collection "{collection_name_tmp}"')
 
             upload_batch = []
             
